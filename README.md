@@ -13,7 +13,7 @@ Built by Group 1 for **MGT3151 E-Business, E-Commerce and E-Governance** at Ugan
 | **Payments** | Flutterwave sandbox only. No real money moves. |
 | **Data** | All names, hostels and payments are fictitious. |
 
-![Explore page: hostels near UCU Mukono on a list and a map](explore.png)
+![Explore page: hostels near UCU Mukono on a list and a map](docs/screenshots/explore.png)
 
 ---
 
@@ -61,23 +61,23 @@ Nestly covers the full e-commerce workflow, from finding a room to reviewing the
 
 | Hostel page | Paying the booking fee |
 |---|---|
-| ![Hostel page with photos, room types and prices](hostel-page.png) | ![Mobile money payment screen](payment.png) |
+| ![Hostel page with photos, room types and prices](docs/screenshots/hostel-page.png) | ![Mobile money payment screen](docs/screenshots/payment.png) |
 | **Booking confirmed with a reference** | **My bookings** |
-| ![Booking confirmed with reference NST-72517](booked.png) | ![Student bookings with status tracker](student-bookings.png) |
+| ![Booking confirmed with reference NST-72517](docs/screenshots/booked.png) | ![Student bookings with status tracker](docs/screenshots/student-bookings.png) |
 
 ### Owners, custodians and administrators
 
 | Owner overview | Owner money page |
 |---|---|
-| ![Owner overview with occupancy and to-do list](owner-overview.png) | ![Owner money page listing every booking fee](owner-money.png) |
+| ![Owner overview with occupancy and to-do list](docs/screenshots/owner-overview.png) | ![Owner money page listing every booking fee](docs/screenshots/owner-money.png) |
 | **Custodian: today's arrivals** | **Administrator: work queue and activity** |
-| ![Custodian Today page with arrivals and rooms](custodian-today.png) | ![Administrator overview](admin-overview.png) |
+| ![Custodian Today page with arrivals and rooms](docs/screenshots/custodian-today.png) | ![Administrator overview](docs/screenshots/admin-overview.png) |
 
 ### On a phone
 
 Every screen is designed for a 360-pixel phone first. From left: Explore, a hostel page, visitor sign-in at the gate, and the custodian's Today page.
 
-![Nestly on a phone](phone-screens.png)
+![Nestly on a phone](docs/screenshots/phone-screens.png)
 
 ---
 
@@ -155,7 +155,7 @@ The test scripts and evidence are in the group repository, [Nestly-v0](https://g
 
 ## How it is built
 
-![Architecture: users' devices, the web app on Vercel, Supabase and outside services](architecture.png)
+![Architecture: users' devices, the web app on Vercel, Supabase and outside services](docs/screenshots/architecture.png)
 
 | Part | Technology | Job |
 |---|---|---|
@@ -185,7 +185,7 @@ nestly/
 │   ├── functions/        Server code: payments and accept-invite
 │   ├── sample_data.sql   Fictitious sample data
 │   └── SETUP.md          Step-by-step database set-up
-├──      Images used in this README
+├── docs/screenshots/     Images used in this README
 ├── .github/              Pull request template
 └── package.json          Scripts and library versions
 ```
