@@ -207,8 +207,6 @@ nestly/
 | 9 | Made Humphrey | Admin console; project set-up and integration (team lead) |
 | 10 | Katawera Noel Ephraim | Backend core: business rules and database security |
 
-Each member's work, with their pull requests, is in the group repository, [Nestly-v0](https://github.com/mightymade/Nestly-v0).
-
 ---
 
 <sub>A student project for MGT3151 at Uganda Christian University. All data is fictitious and all payments use the Flutterwave sandbox. Generative AI use is declared in the project report. Map data © OpenStreetMap contributors.</sub>
