@@ -1,0 +1,77 @@
+/* Nestly design tokens. Every colour, radius, shadow and space used by the app lives here. */
+:root {
+  --canvas: #E9ECF5;
+  --bg: #F2F4FA;
+  --map-land: #EEF0F6; --map-block: #E2E5EE; --map-park: #CFEBD6; --map-water: #C7DBFB; --map-road: #FFFFFF; --map-main: #FFFFFF; --map-edge: #D5D9E5;
+  --surface: #FFFFFF;
+  --surface-2: #F6F7FB;
+  --surface-3: #EEF0F6;
+  --line: #ECEEF4; --line-strong: #C9CEDB;
+  --field-line: #CDD2DF; --field-hover: #AEB4C6;
+  --ink: #1A1C29;
+  --text: #3B3F51;
+  --muted: #676C82; /* darker than the reference grey so captions pass 4.5:1 contrast */
+  --primary: #4F5BEA;
+  --primary-hover: #4350DE;
+  --primary-soft: #ECEEFF;
+  --primary-ink: #3A45C9;
+  --primary-glow: rgba(79, 91, 234, .32);
+  --hero: linear-gradient(135deg, #5561EE 0%, #3D49D4 100%);
+  --on-primary: #FFFFFF;
+  --success: #15803D; --success-bg: #DCFCE7; --success-solid: #22C55E;
+  --danger: #C42B30; --danger-bg: #FEE4E2; --danger-solid: #E5484D;
+  --warn: #9A4A06; --warn-bg: #FEF3C7; --warn-solid: #F59E0B;
+  --bar-muted: #D9DBE5;
+  --tooltip: #17181F;
+  --promo: #17181F;
+  --scrim: rgba(17, 19, 33, .45);
+  --star: #F5A524;
+
+  --shadow-sm: 0 1px 2px rgba(20, 24, 40, .05);
+  --shadow: 0 1px 2px rgba(20, 24, 40, .04), 0 10px 30px rgba(20, 24, 40, .06);
+  --shadow-lg: 0 2px 4px rgba(20, 24, 40, .05), 0 18px 44px rgba(20, 24, 40, .12);
+  --ring: 0 0 0 2px var(--primary);
+
+  --r-frame: 28px; --r-card: 22px; --r-tile: 14px; --r-ctl: 12px; --r-pill: 999px;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px; --s10: 40px;
+  --card-pad: 24px; --gap: 20px;
+
+  --font: "Plus Jakarta Sans", system-ui, "Segoe UI", sans-serif;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --canvas: #0C0E14;
+  --bg: #12141C;
+  --map-land: #191C27; --map-block: #222635; --map-park: #1D3327; --map-water: #1B2A47; --map-road: #2B3042; --map-main: #363C52; --map-edge: #12141C;
+  --surface: #1B1E29;
+  --surface-2: #232736;
+  --surface-3: #2A2E3F;
+  --line: #2A2E3D; --line-strong: #454B5F;
+  --field-line: #3A3F52; --field-hover: #50566C;
+  --ink: #F2F3F8;
+  --text: #C9CCD8;
+  --muted: #9298AE;
+  --primary: #6B76FF;
+  --primary-hover: #7C86FF;
+  --primary-soft: #262B52;
+  --primary-ink: #AEB4FF;
+  --primary-glow: rgba(107, 118, 255, .35);
+  --hero: linear-gradient(135deg, #5A65F0 0%, #3A45C9 100%);
+  --on-primary: #FFFFFF;
+  --success: #4ADE80; --success-bg: rgba(34, 197, 94, .18);
+  --danger: #FF8A8E; --danger-bg: rgba(229, 72, 77, .18);
+  --warn: #FBBF24; --warn-bg: rgba(245, 158, 11, .18);
+  --bar-muted: #353A4C;
+  --tooltip: #0B0C12;
+  --promo: #0F1118;
+  --scrim: rgba(0, 0, 0, .6);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .3);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .25);
+  --shadow-lg: 0 2px 4px rgba(0, 0, 0, .3), 0 18px 44px rgba(0, 0, 0, .45);
+  color-scheme: dark;
+}
+@media (max-width: 899px) { :root { --card-pad: 16px; --gap: 12px } }
+
+/* Soft fills used by some cards. They follow the theme through the -bg tokens. */
+:root { --danger-soft: var(--danger-bg); --success-soft: var(--success-bg) }
