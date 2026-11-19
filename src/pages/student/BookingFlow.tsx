@@ -87,7 +87,8 @@ export function BookingFlow({ h, room, onRoom, onClose }: { h: Hostel; room: num
     <Stepper at={1} />
     <LivePay start={() => startBookingPayment(h.id, room, phone, method)} amount={h.fee} phone={phone} method={method}
       onPaid={x => { setBooking({ id: x.bookingId ?? '', cancelUntil: x.cancelUntil } as Booking); setStep('done'); }}
-      onFailed={(m, field) => { if (field === 'phone') setErr(m); else setFail(m); setStep('pay'); }} /></Overlay>;
+      onFailed={(m, field) => { if (field === 'phone') setErr(m); else setFail(m); setStep('pay'); }}
+      onLater={onClose} laterNote="If the payment goes through, your booking shows up in Bookings. You are never charged twice." /></Overlay>;
 
   if (step === 'wait') return <Overlay title="Waiting for approval" onClose={() => {}} dismissable={false} width={440}>
     <Stepper at={1} />
@@ -108,5 +109,5 @@ export function BookingFlow({ h, room, onRoom, onClose }: { h: Hostel; room: num
         <div className="sum"><span className="muted">Balance to pay at check-in</span><span className="num">{ugx(Math.max(0, r.price - h.fee))}</span></div>
         <div className="sum"><span className="muted">Free cancellation until</span><span>{booking?.cancelUntil}</span></div>
       </div>
-      <p className="small muted">The custodian gives you a room. You can check in once the balance is paid. A receipt was sent to {me.email}.</p></div></Overlay>;
+      <p className="small muted">The custodian gives you a room. You can check in once the balance is paid. {live ? 'Your receipt is saved in Bookings.' : `A receipt was sent to ${me.email}.`}</p></div></Overlay>;
 }

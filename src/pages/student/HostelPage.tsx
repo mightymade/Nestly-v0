@@ -37,7 +37,8 @@ export function HostelPage() {
     : <ErrorState message={error} onRetry={reload} />;
   if (loading && !data) return phone ? <div className="m-main"><Skeleton rows={4} h={160} /></div> : <><div className="skel" style={{ height: 380 }} /><Skeleton rows={2} h={200} /></>;
   const h = data!.hostel;
-  const room = sel ?? Math.max(0, h.rooms.findIndex(r => r.total > r.taken));
+  // Open on the cheapest room that still has space, so the price matches the "From" price on Explore.
+  const room = sel ?? cheapestFree(h);
   const r = h.rooms[room]!; const sem = bookingSem(h); const bookable = !!sem && r.total > r.taken;
   const saved = me ? savedIds(me.id).includes(h.id) : false;
   const back = () => (window.history.length > 1 ? nav(-1) : nav('/s/explore'));
@@ -148,7 +149,7 @@ function PhoneGallery({ h }: { h: Hostel }) {
   };
   const go = (i: number) => { const el = ref.current; if (el) el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' }); };
   return <>
-    <div className="m-gal" ref={ref} onScroll={onScroll} role="group" aria-label="Hostel photos. Swipe to see more.">
+    <div className="m-gal" ref={ref} onScroll={onScroll} role="group" tabIndex={0} aria-label="Hostel photos. Swipe to see more.">
       {Array.from({ length: count }, (_, i) => <div className="m-slide" key={i}><Art hostel={h} alt={i} /></div>)}
     </div>
     {count > 1 && <>
@@ -208,4 +209,10 @@ function ReportListing({ hid, name, review, onClose }: { hid: string; name: stri
       <div className="field"><label htmlFor="fl-t">{pay ? 'When did you pay, and how?' : 'What happened? (optional)'}</label><textarea id="fl-t" className="input" rows={3} maxLength={300} value={text} onChange={e => setText(e.target.value)}
         placeholder={pay ? 'For example: I paid UGX 40,000 by MTN on 6 Nov, reference MP261106.1203' : 'For example: the custodian asked for more than the price shown'} /></div>
     </div></Overlay>;
+}
+
+/** Index of the cheapest room type with space left, or the cheapest one when all are full. */
+export function cheapestFree(h: Hostel) {
+  const idx = h.rooms.map((_, i) => i).sort((a, b) => h.rooms[a]!.price - h.rooms[b]!.price);
+  return idx.find(i => h.rooms[i]!.total > h.rooms[i]!.taken) ?? idx[0] ?? 0;
 }

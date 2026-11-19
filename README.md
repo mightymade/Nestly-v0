@@ -90,8 +90,8 @@ You need **Node.js 18 or newer** (we use Node.js 22). Exact library versions are
 This runs every screen with sample data kept in your browser. After installing, it works offline.
 
 ```bash
-git clone https://github.com/mightymade/nestly.git
-cd nestly
+git clone https://github.com/mightymade/Nestly-v0.git
+cd Nestly-v0
 npm ci
 npm run dev
 ```
@@ -120,7 +120,8 @@ This is the set-up used by the live prototype and our tests.
 |---|---|
 | `npm run build` | Checks the code for errors, then builds the site into `dist/` |
 | `npm run preview` | Serves the built site |
-| `npm run build:single` | Builds the whole app as one HTML file in `dist-single/`, for sharing an offline preview |
+| `npm test` | Runs test cases T01 to T10 (see [Tests](#tests)) |
+| `npm run test:usability` | Runs the phone, laptop and accessibility checks |
 
 ---
 
@@ -136,20 +137,24 @@ All accounts are fictitious. The password for every account is **`nestly123`**.
 | Owner awaiting approval | `daniel.o` | See what a new owner sees before approval |
 | Administrator | `admin` | Approve owners and listings, read the activity log |
 
-In demo mode you can also use the custodian invite code `HILL-4821`, and pay with a phone number ending in `0000` to see a declined payment. The demo box on the login page has **Reset demo** to start fresh.
-
 ---
 
 ## Tests
 
-The prototype was tested in a real browser (Playwright) against the database, with a screenshot for every step.
+The `tests` folder has two scripts that drive a real browser (Playwright) and check the database after each step.
 
-| Check | Result (18 Nov 2026) |
-|---|---|
-| 10 test cases: 7 positive, 2 validation, 1 access control | **10 of 10 pass** |
-| 48 screens on phone and laptop, WCAG 2.1 A and AA, keyboard, slow 4G | **0 accessibility violations, 0 layout faults** |
+| Script | Checks | Result (18 Nov 2026) |
+|---|---|---|
+| `run-tests.cjs` | 10 test cases: 7 positive, 2 validation, 1 access control | **10 of 10 pass** |
+| `usability-checks.cjs` | 48 screens on phone and laptop; WCAG 2.1 A and AA; keyboard; slow 4G | **0 accessibility violations, 0 layout faults** |
 
-The test scripts and evidence are in the group repository, [Nestly-v0](https://github.com/mightymade/Nestly-v0).
+Evidence from the last run, with a screenshot for every step, is in [`tests/evidence`](tests/evidence). How to run the tests yourself is in [`tests/README.md`](tests/README.md).
+
+```bash
+npx playwright install chromium      # once
+npm run dev
+BASE=http://127.0.0.1:5173 PGURL=<database address> npm test
+```
 
 ---
 
@@ -173,7 +178,7 @@ The test scripts and evidence are in the group repository, [Nestly-v0](https://g
 ## Project structure
 
 ```
-nestly/
+Nestly-v0/
 ├── src/
 │   ├── pages/            Screens for each role: student, owner, custodian, admin, auth
 │   ├── components/       Shared building blocks (buttons, cards, tables, maps)
@@ -185,8 +190,8 @@ nestly/
 │   ├── functions/        Server code: payments and accept-invite
 │   ├── sample_data.sql   Fictitious sample data
 │   └── SETUP.md          Step-by-step database set-up
-├── docs/screenshots/     Images used in this README
-├── .github/              Pull request template
+├── tests/                Test scripts and evidence
+├── docs/                 Screenshots and the team's contribution record
 └── package.json          Scripts and library versions
 ```
 
@@ -206,6 +211,8 @@ nestly/
 | 8 | Wako Wallace | Hostel editor and file storage |
 | 9 | Made Humphrey | Admin console; project set-up and integration (team lead) |
 | 10 | Katawera Noel Ephraim | Backend core: business rules and database security |
+
+Who did what in each phase, with the task log, is in [`docs/CONTRIBUTIONS.md`](docs/CONTRIBUTIONS.md).
 
 ---
 

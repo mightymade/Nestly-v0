@@ -67,7 +67,7 @@ function Dashboard({ ownerId }: { ownerId: string }) {
   const kpis = <div className="card sstrip oh-strip" aria-label="Summary">
     <Link to="/o/hostels" className="sc"><span className="sc-l"><BedDouble size={13} />Next semester</span>
       <span className="sc-v num">{k.booked}<small>of {k.total} beds · {pct}%</small></span>
-      <span className="sc-bar" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}><i style={{ width: `${pct}%` }} /></span></Link>
+      <span className="sc-bar" role="progressbar" aria-label={`${pct}% of beds taken`} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}><i style={{ width: `${pct}%` }} /></span></Link>
     <Link to="/o/bookings" className="sc"><span className="sc-l"><CalendarCheck size={13} />{one ? 'Bookings this month' : 'Bookings this week'}</span>
       <span className="sc-v num">{one ? one.month : d.kpi.week}</span>
       {week === null ? <span className="sc-s">at {one!.hostel.name}</span>
@@ -120,7 +120,7 @@ function Dashboard({ ownerId }: { ownerId: string }) {
 
   const recent = <section className="card oh-card" aria-label="Latest activity">
     <div className="td-head"><h2>Latest activity</h2></div>
-    {d.recent.length ? <ul className="act-list">{d.recent.slice(0, phone ? 4 : 6).map((r, i) => <li key={i}><span className={'icon-tile sm ' + (r.kind === 'booking' ? 'primary' : 'success')}>{r.kind === 'booking' ? <CalendarCheck size={16} /> : <KeyRound size={16} />}</span>
+    {d.recent.length ? <ul className="act-list" tabIndex={0} aria-label="Latest activity">{d.recent.slice(0, phone ? 4 : 6).map((r, i) => <li key={i}><span className={'icon-tile sm ' + (r.kind === 'booking' ? 'primary' : 'success')}>{r.kind === 'booking' ? <CalendarCheck size={16} /> : <KeyRound size={16} />}</span>
       <span className="grow small">{r.text}</span><span className="tiny muted nowrap">{timeAgo(r.at)}</span></li>)}</ul> : <p className="small muted">No activity yet.</p>}
   </section>;
 

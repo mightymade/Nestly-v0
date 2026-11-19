@@ -24,7 +24,7 @@ export function SaveButton({ userId, hostel, saved, className = 'save-btn' }: { 
 
 export function LeftPill({ h }: { h: Hostel }) {
   const left = roomsLeft(h);
-  return left === 0 ? <Pill tone="danger">Full</Pill> : <Pill tone={left <= 4 ? 'warn' : 'success'}>{left} {left === 1 ? 'room' : 'rooms'} left</Pill>;
+  return left === 0 ? <Pill tone="danger">Full</Pill> : <Pill tone={left <= 4 ? 'warn' : 'success'}>{left}<span className="pill-long">&nbsp;{left === 1 ? 'room' : 'rooms'}</span>&nbsp;left</Pill>;
 }
 
 export function AmenityChips({ h, max = 2 }: { h: Hostel; max?: number }) {
@@ -59,7 +59,7 @@ export function HostelRow({ h, userId, saved, on, onHover, i = 0 }: { i?: number
         <SaveButton userId={userId} hostel={h} saved={saved} className="save-btn inline" />
       </div>
       <div className="h-row-mid"><Rating value={h.rating} count={h.nRev} /><span className="km-inline"><MapPin size={12} />{h.km} km</span><AmenityChips h={h} max={2} /></div>
-      <div className="h-row-foot"><div className="price">{ugx(minPrice(h))}<span> / sem</span></div><LeftPill h={h} /></div>
+      <div className="h-row-foot"><div className="price"><small className="from-in">From </small>{ugx(minPrice(h))}<span> / sem</span></div><LeftPill h={h} /></div>
     </div>
   </Link>;
 }

@@ -80,6 +80,7 @@ export function VisitorScreen({ hid, onDone, remember }: { hid: string; onDone: 
   const keep = (v: Visitor | null) => { if (!remember) return; try { v ? localStorage.setItem(visitKey(hid), v.id) : localStorage.removeItem(visitKey(hid)); } catch { /* storage blocked */ } };
   const ready = f.name.trim().split(/\s+/).length >= 2 && !!f.host && phoneOk && f.ok;
   const [tried, setTried] = useState(false);
+  const nameErr = tried && f.name.trim().split(/\s+/).length < 2 ? 'Enter your first and last name.' : null;
   async function go(e: FormEvent) {
     e.preventDefault(); setTried(true); if (!ready) return; setBusy(true);
     try { const v = await signInVisitor(hid, { name: f.name.trim(), room: f.host!.room, host: f.host!.name, phone: f.phone.trim() }, 'QR'); keep(v); setDone(v); }
@@ -100,13 +101,14 @@ export function VisitorScreen({ hid, onDone, remember }: { hid: string; onDone: 
         <Btn kind="secondary" block onClick={onDone}>Done</Btn></div>
       : <form className="vp-body" onSubmit={go} noValidate>
         {!open && <div className="banner warn small"><AlertTriangle size={15} className="ic" /><span>Visiting hours are over. You can still sign in, but the custodian may ask you to leave.</span></div>}
-        <Field id="vq-name" label="Your full name"><TextInput id="vq-name" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} autoComplete="name" placeholder="First and last name" /></Field>
-        <Field id="vq-host" label="Who are you visiting?"><HostPicker hid={hid} id="vq-host" value={f.host} onChange={host => setF({ ...f, host })} /></Field>
+        <Field id="vq-name" label="Your full name" error={nameErr}><TextInput id="vq-name" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} error={nameErr} autoComplete="name" placeholder="First and last name" /></Field>
+        <Field id="vq-host" label="Who are you visiting?" error={tried && !f.host ? 'Choose the person you came to see.' : null}><HostPicker hid={hid} id="vq-host" value={f.host} onChange={host => setF({ ...f, host })} /></Field>
         <Field id="vq-phone" label="Your phone number" error={tried && !phoneOk ? 'Enter a 10-digit number, like 0772 123 456.' : null} hint="The custodian may call if they need to reach you.">
           <TextInput id="vq-phone" type="tel" inputMode="tel" autoComplete="tel" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} error={tried && !phoneOk ? 'x' : null} placeholder="0772 123 456" /></Field>
-        <label className="check small"><input type="checkbox" checked={f.ok} onChange={e => setF({ ...f, ok: e.target.checked })} />
+        <label className={'check small vp-agree' + (tried && !f.ok ? ' bad' : '')}><input type="checkbox" checked={f.ok} onChange={e => setF({ ...f, ok: e.target.checked })} />
           <span>I agree that {h.name} keeps my name and visit time for security.</span></label>
-        <Btn type="submit" block loading={busy} disabled={!f.ok}><LogIn size={16} />Sign in</Btn>
+        {tried && !f.ok && <span className="err" role="alert">Tick the box to agree first.</span>}
+        <Btn type="submit" block loading={busy}><LogIn size={16} />Sign in</Btn>
         <p className="tiny muted center row-sm" style={{ justifyContent: 'center' }}><ShieldCheck size={13} />Only {h.name} can see this. Powered by Nestly.</p>
       </form>}
   </div></div>;

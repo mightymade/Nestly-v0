@@ -7,12 +7,13 @@
   --surface-2: #F6F7FB;
   --surface-3: #EEF0F6;
   --line: #ECEEF4; --line-strong: #C9CEDB;
-  --field-line: #CDD2DF; --field-hover: #AEB4C6;
+  --field-line: #878DA1; --field-hover: #6B7187;
   --ink: #1A1C29;
   --text: #3B3F51;
   --muted: #676C82; /* darker than the reference grey so captions pass 4.5:1 contrast */
   --primary: #4F5BEA;
   --primary-hover: #4350DE;
+  --primary-fill: var(--primary); --primary-fill-hover: var(--primary-hover);
   --primary-soft: #ECEEFF;
   --primary-ink: #3A45C9;
   --primary-glow: rgba(79, 91, 234, .32);
@@ -48,12 +49,13 @@
   --surface-2: #232736;
   --surface-3: #2A2E3F;
   --line: #2A2E3D; --line-strong: #454B5F;
-  --field-line: #3A3F52; --field-hover: #50566C;
+  --field-line: #6A7088; --field-hover: #8A90A8;
   --ink: #F2F3F8;
   --text: #C9CCD8;
   --muted: #9298AE;
   --primary: #6B76FF;
   --primary-hover: #7C86FF;
+  --primary-fill: #525CEB; --primary-fill-hover: #4A54E2;
   --primary-soft: #262B52;
   --primary-ink: #AEB4FF;
   --primary-glow: rgba(107, 118, 255, .35);

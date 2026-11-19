@@ -14,9 +14,11 @@ const GIVE_UP_MS = 3 * 60 * 1000;
  * (test mode always asks: 123456), then checks every few seconds until the money arrives or the payment fails.
  * The caller puts it inside its own dialog and decides what happens when it is paid or fails.
  */
-export function LivePay({ start, amount, phone, method, onPaid, onFailed }: {
+export function LivePay({ start, amount, phone, method, onPaid, onFailed, onLater, laterNote }: {
   start: () => Promise<PayResult>; amount: number; phone: string; method: 'mtn' | 'airtel';
   onPaid: (r: PayResult) => void; onFailed: (message: string, field?: string) => void;
+  /** Lets the person close the dialog after a long wait. The payment keeps going in the background. */
+  onLater?: () => void; laterNote?: string;
 }) {
   const [p, setP] = useState<PayResult | null>(null); const [otp, setOtp] = useState(''); const [otpErr, setOtpErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false); const [stale, setStale] = useState(false);
@@ -62,6 +64,6 @@ export function LivePay({ start, amount, phone, method, onPaid, onFailed }: {
     <h2>{stale ? 'Still waiting for the payment' : 'Check your phone and enter your PIN'}</h2>
     <p className="muted">{stale ? 'We have not heard back yet. Approve the prompt if you have not, then check again. You are never charged twice.' : (p.next?.note ?? `Approve ${ugx(amount)} on the ${NET[method]} prompt sent to ${phone}.`)}</p>
     {otpErr && <span className="err" role="alert">{otpErr}</span>}
-    {stale ? <Btn block loading={busy} onClick={checkNow}>Check again</Btn> : <p className="hint">This page updates by itself.</p>}
+    {stale ? <><Btn block loading={busy} onClick={checkNow}>Check again</Btn>{onLater && <><Btn kind="secondary" block onClick={onLater}>Close, I will check later</Btn>{laterNote && <p className="hint">{laterNote}</p>}</>}</> : <p className="hint">This page updates by itself.</p>}
   </div>;
 }

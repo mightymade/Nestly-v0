@@ -73,6 +73,6 @@ function Account({ inv }: { inv: Inv }) {
     </div>
     {err.form && <span className="err">{err.form}</span>}
     <Btn type="submit" block loading={busy}>Create account</Btn>
-    <p className="tiny muted center">By creating an account you agree to the <Link to="/terms" target="_blank">terms of use</Link> and <Link to="/privacy" target="_blank">privacy policy</Link>.</p>
+    <p className="tiny muted" style={{ textAlign: 'center' }}>By creating an account you agree to the <Link to="/terms" target="_blank">terms of use</Link> and <Link to="/privacy" target="_blank">privacy policy</Link>.</p>
   </form>;
 }

@@ -142,7 +142,8 @@ function PaySub({ fee, months, phone0, ownerId, onClose }: { fee: number; months
   if (paying) return <Overlay title="Pay your Nestly subscription" onClose={() => {}} dismissable={false} width={440}>
     <LivePay start={() => startSubscriptionPayment(months, num, m)} amount={fee * months} phone={num} method={m}
       onPaid={x => { toast(`Subscription paid until ${dayDate(x.paidUntil ?? '')}`); onClose(); }}
-      onFailed={msg => { setErr(msg); setPaying(false); }} /></Overlay>;
+      onFailed={msg => { setErr(msg); setPaying(false); }}
+      onLater={onClose} laterNote="If the payment goes through, it shows up on this page. You are never charged twice." /></Overlay>;
   return <Overlay title="Pay your Nestly subscription" onClose={onClose} width={440} footer={<Btn block loading={busy} onClick={go}><Smartphone size={16} />Pay {ugx(fee * months)}</Btn>}>
     <div className="stack">
       <p className="small muted">{months > 1 ? `${months} months you are behind on, ${ugx(fee)} each.` : 'One month of Nestly for your hostels.'} You get a prompt on your phone to approve. Paused hostels come back straight away.</p>

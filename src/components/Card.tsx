@@ -7,6 +7,6 @@ export function Card({ title, subtitle, action, children, className = '', pad = 
   const cls = ['card', pad && 'card-pad', fill && 'fill-card fill grow-y', className].filter(Boolean).join(' ');
   return <section className={cls} id={id} aria-label={typeof title === 'string' ? title : undefined}>
     {(title || action) && <div className="card-head"><div className="grow">{title && <h2>{title}</h2>}{subtitle && <p className="sub">{subtitle}</p>}</div>{action}</div>}
-    {fill ? <div className={'card-body' + (scroll ? ' scroll-y' : '')}>{children}</div> : children}
+    {fill ? <div className={'card-body' + (scroll ? ' scroll-y' : '')} {...(scroll ? { tabIndex: 0, role: 'region', 'aria-label': typeof title === 'string' ? title : 'Card content' } : {})}>{children}</div> : children}
   </section>;
 }
