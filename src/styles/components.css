@@ -1671,6 +1671,7 @@ a.sc:hover, button.sc:hover { background: var(--surface-2) } button.sc { text-al
   .pager-num { width: auto }
   .avatar-edit .cam { width: 40px; height: 40px }
   .check input { width: 24px; height: 24px }
+  .sx-pane .s-clear, .vsx-clear { width: 40px; height: 40px; top: calc(50% - 20px); right: 4px }
   .auth-foot button, .auth-foot a { padding-left: 8px; padding-right: 8px }
   /* Photo dots stay small to look at but get a 24px tap area */
   .m-hero .m-dots { gap: 0; padding: 0 4px }

@@ -2,7 +2,7 @@
 
 **Find, book and pay for a verified hostel room from your phone.**
 
-Nestly is a web platform for university students in Uganda. Students search and compare hostels near their campus, book a room and pay a booking fee by mobile money. Hostel owners and custodians manage bookings, rooms, rent balances and visitors in one place, and an administrator checks every owner before their hostel is listed.
+Nestly is a web platform for university students in Uganda. Students search and compare hostels near their campus, book a room and pay a booking fee by mobile money. Hostel owners and custodians manage bookings, rooms, rent balances and visitors in one place. An administrator checks every owner's ID before their hostel is listed, and checks each student's university ID before they can book.
 
 Built by Group 1 for **MGT3151 E-Business, E-Commerce and E-Governance** at Uganda Christian University (Advent 2026), project option B: E-Commerce.
 
@@ -47,11 +47,11 @@ Nestly covers the full e-commerce workflow, from finding a room to reviewing the
 
 | Role | What they can do |
 |---|---|
-| **Student** | Search, save, book and pay; see bookings, receipts and their hostel |
-| **Hostel owner** | List hostels, track bookings and fees, invite custodians, pay the monthly subscription |
+| **Student** | Sign up and have their university ID checked; search, save, book and pay; see bookings, receipts and their hostel |
+| **Hostel owner** | List hostels, track bookings and fees, invite custodians by email, pay the monthly subscription |
 | **Custodian** | See arrivals, give rooms, record rent balances, check students in, manage visitors |
 | **Visitor** | Sign in at the hostel gate by scanning a QR code, without an account |
-| **Administrator** | Verify owners and listings, handle reports, manage users and subscriptions |
+| **Administrator** | Verify owners, listings and student IDs, handle reports, watch security signals, manage users and subscriptions |
 
 ---
 
@@ -106,9 +106,9 @@ This is the set-up used by the live prototype and our tests.
 
 1. Create a free project at [supabase.com](https://supabase.com).
 2. Follow [`supabase/SETUP.md`](supabase/SETUP.md) step by step:
-   - run the files in `supabase/migrations` in order (`0001` to `0009`), then `supabase/sample_data.sql`
-   - deploy the two server functions, `payments` and `accept-invite`
-   - add your Flutterwave **sandbox** keys as function secrets
+   - run the files in `supabase/migrations` in order (`0001` to `0012`), then `supabase/sample_data.sql`
+   - deploy the seven server functions in `supabase/functions`: `payments`, `accept-invite`, `student-signup`, `send-invite`, `login`, `send-mail` and `backup`
+   - add your Flutterwave **sandbox** keys and the Gmail app password as function secrets, then turn on the scheduled jobs (section 8 of the guide)
 3. Copy `.env.example` to `.env` and fill in your project's URL and **anon** (public) key.
 4. Run `npm ci`, then `npm run dev`.
 
@@ -135,7 +135,9 @@ All accounts are fictitious. The password for every account is **`nestly123`**.
 | Custodian | `peter.k` | Give a room, record the balance, check in, open the gate QR |
 | Owner | `grace.n` | Check bookings and fees, invite staff, pay the subscription |
 | Owner awaiting approval | `daniel.o` | See what a new owner sees before approval |
-| Administrator | `admin` | Approve owners and listings, read the activity log |
+| Administrator | `admin` | Approve owners, listings and student IDs, read the activity log |
+
+> **Administrator on the live prototype:** admin accounts also need a 6-digit code from an authenticator app (two-step login), and that phone is held by the team lead. To explore the admin screens yourself, use the quick demo (Option 1 above), where no code is asked for.
 
 ---
 
@@ -143,7 +145,7 @@ All accounts are fictitious. The password for every account is **`nestly123`**.
 
 The `tests` folder has two scripts that drive a real browser (Playwright) and check the database after each step.
 
-| Script | Checks | Result (18 Nov 2026) |
+| Script | Checks | Result (25 Nov 2026) |
 |---|---|---|
 | `run-tests.cjs` | 10 test cases: 7 positive, 2 validation, 1 access control | **10 of 10 pass** |
 | `usability-checks.cjs` | 48 screens on phone and laptop; WCAG 2.1 A and AA; keyboard; slow 4G | **0 accessibility violations, 0 layout faults** |
@@ -166,12 +168,13 @@ BASE=http://127.0.0.1:5173 PGURL=<database address> npm test
 |---|---|---|
 | Web app | React 18, TypeScript, Vite | All screens; hosted on Vercel |
 | Database | PostgreSQL on Supabase | 19 tables; row-level security decides what each user can see |
-| Logins | Supabase Auth | Sign-up, login and email confirmation |
+| Logins | Supabase Auth + a login server function | Sign-up and email confirmation, student ID checks, two-step login for admins, slowed-down password guessing and new-device alerts |
 | Files | Supabase Storage | Public hostel photos; private owner documents |
 | Payments | Supabase Edge Function + Flutterwave sandbox | Starts each charge and verifies it before a booking is confirmed |
+| Email | Supabase Edge Functions + Gmail | Custodian invites and security alerts; a nightly backup runs on a schedule |
 | Maps | Leaflet + OpenStreetMap | Hostel locations and walking routes |
 
-**Security in short:** the browser is never trusted. Every rule (who can see what, one booking per semester, check-in only after the balance is paid) is enforced in the database. Payment secrets live only on the server, and the mobile money PIN is typed only on the payer's phone.
+**Security in short:** the browser is never trusted. Every rule (who can see what, one booking per semester, check-in only after the balance is paid) is enforced in the database. Payment secrets live only on the server, and the mobile money PIN is typed only on the payer's phone. Admin powers need two-step login, sensitive actions need a recent password or code, a change to an owner's payout number waits 24 hours and can be cancelled from an email link, and the activity log cannot be edited.
 
 ---
 
@@ -187,7 +190,7 @@ Nestly-v0/
 │   └── data/             Data types and sample catalogue
 ├── supabase/
 │   ├── migrations/       Database tables, security rules and functions (run in order)
-│   ├── functions/        Server code: payments and accept-invite
+│   ├── functions/        Server code: payments, logins, invites, emails and backups
 │   ├── sample_data.sql   Fictitious sample data
 │   └── SETUP.md          Step-by-step database set-up
 ├── tests/                Test scripts and evidence

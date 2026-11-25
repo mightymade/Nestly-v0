@@ -50,6 +50,8 @@ Every member owns one part of the prototype and has a task in every phase. Each 
 | | Phase 3 fixes D1 to D8 | Owners above | One commit each |
 | | Tests, README, contributions | Made | Commit |
 | | Phase 4 fixes F1 to F5 | Owners above | One commit each |
+| 25 Nov | Final update: student ID check, security hardening, emailed custodian invites, UI and UX pass | Made | c643e6e |
+| 25 Nov | README, screenshots and test evidence for the final version | Made | Commit |
 
 Add the date and commit for each open row as it is done.
 

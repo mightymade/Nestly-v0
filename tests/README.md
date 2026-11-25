@@ -12,7 +12,7 @@ Two scripts check the prototype in a real browser (Playwright), on real data (Su
 - Node.js 18 or newer, and `npm install` done in the project folder
 - Playwright and axe-core come with `npm ci`; download the browser once with `npx playwright install chromium`
 - `psql` (PostgreSQL client), because the tests also check the database
-- A Supabase project (or a local copy) with migrations 0001 to 0009 and `supabase/sample_data.sql` loaded, plus an admin account `admin` / `nestly123`
+- A Supabase project (or a local copy) with migrations 0001 to 0012 and `supabase/sample_data.sql` loaded, plus an admin account `admin` / `nestly123` (the tests pass its two-step login themselves)
 - The payments function deployed in sandbox mode (see `supabase/SETUP.md`)
 - For T02 (email confirmation) the confirmation emails must be readable: on a local copy, set `MAIL_LOG` to the email catcher's log file
 

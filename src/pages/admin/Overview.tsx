@@ -39,7 +39,7 @@ export function AdminOverview() {
   </Card>;
   const paidShare = m.owners ? Math.round(((m.paid + m.due) / m.owners) * 100) : 0;
   const strip = <div className="card sstrip oh-strip ad-strip" aria-label="Nestly at a glance">
-    <Link to="/a/subscriptions?tab=payments" className="sc"><span className="sc-l">Subscriptions this month</span><span className="sc-v num">{ugx(m.month)}</span>
+    <Link to="/a/subscriptions?tab=payments" className="sc"><span className="sc-l">Subscription income</span><span className="sc-v num">{ugx(m.month)}</span>
       <span className="sc-s">Last month {ugx(m.lastMonth)}</span></Link>
     <Link to="/a/subscriptions?tab=all" className="sc"><span className="sc-l">Owners paid up</span><span className="sc-v num">{m.paid + m.due}<small>of {m.owners}</small></span>
       <span className="sc-bar"><i style={{ width: `${paidShare}%` }} /></span></Link>
