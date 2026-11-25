@@ -13,16 +13,19 @@ import { getThemePref, setThemePref, type ThemePref } from '../../lib/theme';
 import { useIsPhone } from '../../lib/useIsPhone';
 import { MoneyInput } from '../../components/MoneyInput';
 import { dayLabel, ugx } from '../../lib/format';
-import { ownerHostelCounts, saveConfig, subConfig, ApiError, changePassword, docsOf, hostelById, logout, savePayout, universityById, updateProfile, usernameAvailable } from '../../services/api';
+import { applyDuePayouts, cancelMyPayoutChange, ownerHostelCounts, saveConfig, subConfig, ApiError, changePassword, docsOf, hostelById, logout, savePayout, universityById, updateProfile, usernameAvailable } from '../../services/api';
 import { Segmented } from '../../components/Segmented';
 import { useData } from '../../services/useData';
 import { maskTo } from '../owner/shared';
 import { useMe } from '../../services/session';
+import { freshAuth, removeTwoStep, twoStepOn } from '../../services/security';
+import { SetupForm } from './TwoStep';
 import { GateQR } from '../custodian/shared';
 
 const ALL = [
   { id: 'profile', label: 'Profile', icon: UserRound, sub: 'Photo, name and contact details' },
   { id: 'password', label: 'Password', icon: KeyRound, sub: 'Change your password' },
+  { id: 'twostep', label: 'Two-step login', icon: ShieldCheck, sub: 'A code from your phone when you log in' },
   { id: 'payout', label: 'Payment account', icon: Wallet, sub: 'Where students pay booking fees' },
   { id: 'documents', label: 'Documents', icon: FileCheck2, sub: 'Your ID and ownership papers' },
   { id: 'pricing', label: 'Subscription price', icon: Tag, sub: 'What owners pay Nestly each month' },
@@ -30,7 +33,7 @@ const ALL = [
   { id: 'access', label: 'My access', icon: ShieldCheck, sub: 'What your role can and cannot do' },
 ] as const;
 type SectionId = typeof ALL[number]['id'];
-const sectionsFor = (role: string) => ALL.filter(s => s.id === 'pricing' ? role === 'admin' : role === 'owner' || (s.id !== 'payout' && s.id !== 'documents'));
+const sectionsFor = (role: string) => ALL.filter(s => s.id === 'pricing' ? role === 'admin' : s.id === 'twostep' ? role === 'admin' || role === 'owner' : role === 'owner' || (s.id !== 'payout' && s.id !== 'documents'));
 
 export function SettingsPage({ base, home }: { base: string; home: string }) {
   const { section } = useParams(); const phone = useIsPhone(); const me = useMe(); const nav = useNavigate(); const [qr, setQr] = useState(false);
@@ -39,18 +42,18 @@ export function SettingsPage({ base, home }: { base: string; home: string }) {
   const sec = SECTIONS.find(s => s.id === section);
   if (section && !sec) return <Navigate to={base} replace />;
   const body = (id: SectionId) => id === 'profile' ? <ProfileSection /> : id === 'password' ? <PasswordSection /> : id === 'appearance' ? <AppearanceSection /> : id === 'pricing' ? <PricingSection />
-    : id === 'payout' ? <PayoutSection /> : id === 'documents' ? <DocumentsSection /> : <AccessSection />;
+    : id === 'payout' ? <PayoutSection /> : id === 'twostep' ? <TwoStepSection /> : id === 'documents' ? <DocumentsSection /> : <AccessSection />;
   const where = me.role === 'student' ? universityById(me.universityId)?.short : me.role === 'custodian' ? hostelById(me.hostelId ?? '')?.name : me.role === 'owner' ? 'Hostel owner' : 'Nestly team';
   const helpPath = { student: '/s/help', custodian: '/c/help', owner: '/o/help', admin: '/a/help' }[me.role];
   const pageTitle = me.role === 'student' ? 'Account' : 'Settings';
 
   if (phone) {
-    if (sec) return <><BackBar title={sec.label} to={base} /><main className="m-main pushed" style={{ paddingBottom: 110 }}>{body(sec.id)}</main></>;
+    if (sec) return <><BackBar title={sec.label} to={base} /><main className="m-main pushed" style={{ paddingBottom: 112 }}>{body(sec.id)}</main></>;
     const content = <>
       <div className="card profile-card">
         <Link to={`${base}/profile`} className="avatar-edit" aria-label="Change profile photo"><Avatar user={me} size={88} /><span className="cam"><Camera size={15} /></span></Link>
-        <h2 style={{ fontSize: 20, marginTop: 6 }}><VerifiedName user={me} /></h2><p className="small muted">{me.role === 'student' ? 'Student' : me.role === 'custodian' ? 'Custodian' : me.role === 'owner' ? 'Owner' : 'Admin'} · {where}</p>
-        {me.role === 'student' && !me.emailVerified && <Link to="/signup"><Pill tone="warn">Email not confirmed. Tap to confirm</Pill></Link>}
+        <h2 style={{ fontSize: 20, marginTop: 8 }}><VerifiedName user={me} /></h2><p className="small muted">{me.role === 'student' ? 'Student' : me.role === 'custodian' ? 'Custodian' : me.role === 'owner' ? 'Owner' : 'Admin'} · {where}</p>
+        {me.role === 'student' && !me.emailVerified && <Link to="/signup"><Pill tone="warn">{me.verifyVia === 'id' ? (me.idStatus === 'rejected' ? 'Student ID not accepted. Tap to fix' : me.idStatus === 'needs_photo' ? 'Student ID photos needed. Tap to add' : 'Student ID being checked') : 'Email not confirmed. Tap to confirm'}</Pill></Link>}
       </div>
       <div className="card m-list">{SECTIONS.filter(s => !(me.role === 'custodian' && s.id === 'appearance')).map(s => <Link key={s.id} to={`${base}/${s.id}`}><span className="icon-tile sm primary"><s.icon size={18} /></span>
         <span className="grow">{s.label}<span className="sub">{s.sub}</span></span><ChevronRight size={18} className="chev" /></Link>)}
@@ -155,9 +158,9 @@ function ProfileSection() {
           : <Field id="pf-phone" label="Mobile money number" error={err.phone}><TextInput id="pf-phone" type="tel" inputMode="tel" value={f.phone} onChange={set('phone')} error={err.phone} autoComplete="tel" /></Field>}
         {isCust
           ? <Field id="pf-email" label="Email" error={err.email} hint={f.email !== me.email ? 'We will send a link to confirm the new address.' : undefined}><TextInput id="pf-email" type="email" value={f.email} onChange={set('email')} error={err.email} autoComplete="email" /></Field>
-          : <Field id="pf-email" label="Student email" hint={me.emailVerified ? `Confirmed until ${dayLabel(me.verifiedUntil)}` : undefined}>
+          : <Field id="pf-email" label={me.verifyVia === 'id' ? 'Email' : 'Student email'} hint={me.emailVerified ? (me.verifyVia === 'id' ? `Student ID ${me.studentNo ?? ''} approved, valid until ${dayLabel(me.verifiedUntil)}` : `Confirmed until ${dayLabel(me.verifiedUntil)}`) : undefined}>
               <div className="input-wrap has-trail"><TextInput id="pf-email" value={me.email} readOnly /><span className="trail" style={{ color: me.emailVerified ? 'var(--success)' : 'var(--warn)', width: 36, display: 'grid', placeItems: 'center' }}>{me.emailVerified ? <Check size={18} /> : <X size={18} />}</span></div>
-              {!me.emailVerified && <Link to="/signup" className="btn btn-primary btn-sm" style={{ width: 'fit-content' }}>Confirm my email</Link>}</Field>}
+              {!me.emailVerified && <Link to="/signup" className="btn btn-primary btn-sm" style={{ width: 'fit-content' }}>{me.verifyVia === 'id' ? (me.idStatus === 'needs_photo' || me.idStatus === 'rejected' ? 'Add student ID photos' : 'See student ID status') : 'Confirm my email'}</Link>}</Field>}
         {isCust
           ? <Field id="pf-phone" label="Phone" error={err.phone}><TextInput id="pf-phone" type="tel" inputMode="tel" value={f.phone} onChange={set('phone')} error={err.phone} autoComplete="tel" /></Field>
           : <Field id="pf-uni" label="University"><TextInput id="pf-uni" value={universityById(me.universityId)?.name ?? ''} readOnly /></Field>}
@@ -194,9 +197,9 @@ function PasswordSection() {
 const THEMES: { id: ThemePref; label: string; icon: typeof Sun }[] = [{ id: 'light', label: 'Light', icon: Sun }, { id: 'dark', label: 'Dark', icon: Moon }, { id: 'system', label: 'Match device', icon: Monitor }];
 function Mini({ dark }: { dark: boolean }) {
   const c = dark ? { bg: '#12141C', card: '#1B1E29', line: '#2A2E3D', p: '#6B76FF' } : { bg: '#F2F4FA', card: '#FFFFFF', line: '#ECEEF4', p: '#4F5BEA' };
-  return <div style={{ background: c.bg, display: 'grid', gridTemplateColumns: '30% 1fr', gap: 5, padding: 6, height: '100%' }}>
-    <div style={{ background: c.card, borderRadius: 6, padding: 5, display: 'flex', flexDirection: 'column', gap: 4 }}><i style={{ height: 6, borderRadius: 3, background: c.p }} /><i style={{ height: 4, borderRadius: 3, background: c.line }} /><i style={{ height: 4, borderRadius: 3, background: c.line }} /></div>
-    <div style={{ display: 'grid', gap: 5, gridTemplateRows: '1fr 1fr' }}><div style={{ borderRadius: 6, background: `linear-gradient(135deg, ${c.p}, #3D49D4)` }} /><div style={{ borderRadius: 6, background: c.card }} /></div></div>;
+  return <div style={{ background: c.bg, display: 'grid', gridTemplateColumns: '30% 1fr', gap: 4, padding: 8, height: '100%' }}>
+    <div style={{ background: c.card, borderRadius: 6, padding: 4, display: 'flex', flexDirection: 'column', gap: 4 }}><i style={{ height: 6, borderRadius: 3, background: c.p }} /><i style={{ height: 4, borderRadius: 3, background: c.line }} /><i style={{ height: 4, borderRadius: 3, background: c.line }} /></div>
+    <div style={{ display: 'grid', gap: 4, gridTemplateRows: '1fr 1fr' }}><div style={{ borderRadius: 6, background: `linear-gradient(135deg, ${c.p}, #3D49D4)` }} /><div style={{ borderRadius: 6, background: c.card }} /></div></div>;
 }
 /** Admin only: the subscription price. This is Nestly's only income. */
 function PricingSection() {
@@ -268,18 +271,49 @@ function PayoutSection() {
   async function submit(e: FormEvent) {
     e.preventDefault(); if (!pw) return setErr({ password: 'Enter your password to change where money goes.' });
     setBusy(true); setErr({});
-    try { await savePayout(me.id, f, pw); setPw(''); toast('Saved. New booking fees go straight to this account.'); }
+    try { const u = await savePayout(me.id, f, pw); setPw(''); if (u.payoutPending && u.payout) setF({ bank: '', ...u.payout }); toast(u.payoutPending ? 'Change requested. It starts in 24 hours. We emailed you a link to cancel it.' : 'Saved. New booking fees go straight to this account.'); }
     catch (x) { const a = x as ApiError; setErr({ [a.field ?? 'to']: a.message }); } finally { setBusy(false); }
   }
+  useEffect(() => { applyDuePayouts().catch(() => undefined); }, []);
+  const pend = me.payoutPending; const [cancelling, setCancelling] = useState(false);
+  const startsAt = me.payoutPendingAt ? new Date(+new Date(me.payoutPendingAt) + 86400000) : null;
   return <form onSubmit={submit} noValidate>
     <SectionHead title="Payment account" sub={`Students pay booking fees straight into this account. Nestly never holds your money. Now: ${me.payout ? maskTo(me.payout.method, me.payout.to) : 'no account yet'}.`} />
+    {pend && <div className="banner warn" style={{ alignItems: 'flex-start', marginBottom: 16 }}><ShieldCheck size={18} className="ic" /><span className="grow small">
+      <b>Change waiting:</b> to {maskTo(pend.method, pend.to)}, name {pend.name}. {me.payoutReview ? 'The name is different from yours, so the Nestly team checks it first. ' : ''}It starts {startsAt ? startsAt.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'in 24 hours'}{me.payoutReview ? ' at the earliest' : ''}. Until then, fees keep going to your current account.
+      <span className="row" style={{ gap: 8, marginTop: 8 }}><Btn kind="secondary" size="sm" loading={cancelling} onClick={async () => { setCancelling(true); try { await cancelMyPayoutChange(me.id); toast('Change cancelled. Your account stays as it was.'); } catch (x) { toast((x as Error).message); } finally { setCancelling(false); } }}>Cancel this change</Btn></span></span></div>}
     <Row label="Method"><Segmented full label="Payment method" value={f.method} onChange={m => setF({ ...f, method: m })} options={[{ value: 'mtn', label: 'MTN MoMo' }, { value: 'airtel', label: 'Airtel Money' }, { value: 'bank', label: 'Bank' }]} /></Row>
     {f.method === 'bank' && <Row label="Bank"><Field id="ps-bank" label="Bank"><TextInput id="ps-bank" value={f.bank ?? ''} onChange={e => setF({ ...f, bank: e.target.value })} /></Field></Row>}
     <Row label={f.method === 'bank' ? 'Account number' : 'Number'}><Field id="ps-to" label={f.method === 'bank' ? 'Account number' : 'Mobile money number'} error={err.to}><TextInput id="ps-to" value={f.to} onChange={e => setF({ ...f, to: e.target.value })} error={err.to} /></Field>
       <Field id="ps-name" label="Name on the account" error={err.name}><TextInput id="ps-name" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} error={err.name} /></Field></Row>
+    {dirty && me.payout && me.ownerStatus === 'approved' && <p className="small muted" style={{ margin: '8px 0' }}>For your safety, a new account starts 24 hours after you save, and we email you a link to cancel it. If the name is not yours, the Nestly team checks it first.</p>}
     {dirty && <Row label="Confirm it is you" hint="Changing where money goes needs your password."><Field id="ps-pw" label="Your password" error={err.password}><PasswordInput id="ps-pw" value={pw} onChange={e => setPw(e.target.value)} error={err.password} autoComplete="current-password" /></Field></Row>}
     <SaveBar dirty={dirty} busy={busy} onReset={() => { setF(init); setPw(''); }} />
   </form>;
+}
+
+/** Two-step login: required for admins, recommended for owners because they control where money goes. */
+function TwoStepSection() {
+  const me = useMe(); const toast = useToast();
+  const [on, setOn] = useState<boolean | null>(null); const [setup, setSetup] = useState(false); const [busy, setBusy] = useState(false);
+  useEffect(() => { twoStepOn(me.id).then(setOn); }, [me.id]);
+  async function off() {
+    setBusy(true);
+    try { await freshAuth(me.id, me.email); await removeTwoStep(me.id); setOn(false); toast('Two-step login is off.'); } catch (x) { toast((x as Error).message); } finally { setBusy(false); }
+  }
+  return <div>
+    <SectionHead title="Two-step login" sub={me.role === 'admin' ? 'Admins must use it. After your password, you enter a 6-digit code from an app on your phone.' : 'After your password, you enter a 6-digit code from an app on your phone. Someone who learns your password still cannot get in or move your money.'} />
+    {on === null ? <p className="muted small">Checking...</p>
+      : setup ? <div style={{ maxWidth: 420 }}><SetupForm uid={me.id} onDone={() => { setSetup(false); setOn(true); toast('Two-step login is on.'); }} /></div>
+      : on ? <div className="stack" style={{ maxWidth: 480 }}>
+          <div className="banner success"><ShieldCheck size={18} className="ic" /><span className="grow">Two-step login is on for this account.</span></div>
+          {me.role !== 'admin' ? <Btn kind="secondary" loading={busy} onClick={off}>Turn it off</Btn> : <p className="small muted">Admins cannot turn it off. Lost your phone? Ask another admin to reset it in the Supabase dashboard (Authentication, Users, your account, Remove factors).</p>}
+        </div>
+      : <div className="stack" style={{ maxWidth: 480 }}>
+          <div className="banner warn"><ShieldCheck size={18} className="ic" /><span className="grow">Two-step login is off. {me.role === 'owner' ? 'We strongly recommend it for owners.' : ''}</span></div>
+          <Btn onClick={() => setSetup(true)}><ShieldCheck size={16} />Set up two-step login</Btn>
+        </div>}
+  </div>;
 }
 
 function DocumentsSection() {

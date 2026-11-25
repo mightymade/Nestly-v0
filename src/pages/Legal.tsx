@@ -58,7 +58,7 @@ export function PrivacyPage() {
         <ul>
           <li><b>The hostel you book</b>: the owner and custodian see your name, phone number and booking, so they can give you a room.</li>
           <li><b>Custodians</b> see the students and visitors at their own hostel only.</li>
-          <li><b>Owners' ID documents</b> are seen only by the Nestly team that checks them. They are kept in private storage, and links to them expire after a few hours.</li>
+          <li><b>Owners' ID documents</b> are seen only by the Nestly team that checks them. They are kept in private storage, and links to them expire after 15 minutes.</li>
           <li><b>Everyone</b> can see hostel listings, and reviews with the reviewer's first name and initial.</li>
           <li><b>Services that run Nestly for us</b>: Supabase (database, logins and file storage), Vercel (the website), Flutterwave (mobile money payments), our email provider (account emails), and OpenStreetMap services (maps and walking routes). They use your information only to provide their service.</li></ul>
         <p>We never sell your information or share it for advertising.</p></> },
@@ -66,7 +66,11 @@ export function PrivacyPage() {
         <p>Nestly's database and files are stored by Supabase in the European Union (Paris, France). The Act allows data to be kept outside Uganda with your consent or where the country protects it at least as well as Uganda does; by using Nestly you agree to this.</p>
         <ul>
           <li><b>Accounts</b> are kept while you use Nestly, and deleted when you ask.</li>
-          <li><b>Visitor logs</b> are deleted automatically after 90 days.</li>
+          <li><b>Visitor logs</b> are deleted automatically after 30 days.</li>
+          <li><b>Student ID photos and selfies</b> are deleted as soon as the Nestly team has checked them.</li>
+          <li><b>Login records</b> (time, device type and network address, used to spot break-ins) are deleted after 90 days.</li>
+          <li><b>Accounts never confirmed</b> are deleted after 30 days; student ID accounts that never sent their photos, after 60 days.</li>
+          <li><b>Backups</b> of the database are kept for 30 days, in private storage.</li>
           <li><b>Bookings and payment records</b> are kept for as long as the law requires for financial records, then deleted.</li>
           <li><b>Owner ID documents</b> are kept while the owner has hostels on Nestly, and deleted when they leave.</li></ul></> },
       { id: 'rights', title: 'Your rights', body: <>
@@ -78,6 +82,10 @@ export function PrivacyPage() {
         <li>Every table in the database has access rules: each person can only read and change what their role allows, and the server checks this on every request.</li>
         <li>Passwords are stored only as secure hashes. Nobody at Nestly can see them.</li>
         <li>Payments are confirmed with Flutterwave by our server. The browser can never mark anything as paid.</li>
+        <li>Admins must use two-step login, and confirm it is them again before approving or pausing accounts. Owners can turn on two-step login too.</li>
+        <li>Repeated wrong passwords lock an account for 15 minutes, and we email you when your account signs in on a new device.</li>
+        <li>A change to an owner's payout account waits 24 hours and can be cancelled from the email we send.</li>
+        <li>Found a security problem? Tell us at <a href="/security">nestly-ug.vercel.app/security</a>.</li>
         <li>If your information is ever accessed by someone who should not have it, we will tell the PDPO straight away, as the law requires, and tell you when the PDPO says we should.</li></ul> },
       { id: 'children', title: 'Children', body: <p>Nestly is for university students and hostel staff, who are adults. If you are under 18, ask a parent or guardian to help you, and do not create an account without their consent.</p> },
       { id: 'changes', title: 'Changes to this policy', body: <p>If we change this policy, we update the date at the top and, for important changes, tell you in the app or by email before they apply.</p> },

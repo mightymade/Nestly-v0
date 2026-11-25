@@ -1,3 +1,7 @@
+import { ReauthHost } from './components/Reauth';
+import { TwoStepPage } from './pages/shared/TwoStep';
+import { SecurityReportPage, PayoutCancelPage } from './pages/SecurityPages';
+import { aalNow, codePending } from './services/security';
 import { useEffect } from 'react';
 import { BrowserRouter, Link, MemoryRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { Logo } from './components/ui';
@@ -52,6 +56,8 @@ function Guard({ role }: { role: Role }) {
   if (!u) return <Navigate to="/welcome" replace />;
   if (u.role !== role) return <Navigate to={home(u)} replace />;
   if (role === 'owner' && u.ownerStatus === 'incomplete') return <Navigate to="/owner/signup" replace />;
+  // Two-step login: finish the code first. Admins must use it (the database refuses admin powers without it too).
+  if (codePending() || (role === 'admin' && aalNow() !== 'aal2')) return <Navigate to="/security/two-step" replace />;
   return <Outlet />;
 }
 /** Students' area. Guests may browse Explore, hostel pages and Help; everything else needs an account. */
@@ -82,7 +88,7 @@ function AppRoutes() {
   useIsPhone(); // keeps the body class in sync
   return <Routes>
     <Route path="/" element={<Root />} />
-    <Route path="/visit/:hid" element={<VisitPage />} /><Route path="/pay/return" element={<PayReturn />} /><Route path="/privacy" element={<PrivacyPage />} /><Route path="/terms" element={<TermsPage />} /><Route path="/reset-password" element={<ResetPassword />} />
+    <Route path="/visit/:hid" element={<VisitPage />} /><Route path="/pay/return" element={<PayReturn />} /><Route path="/privacy" element={<PrivacyPage />} /><Route path="/terms" element={<TermsPage />} /><Route path="/reset-password" element={<ResetPassword />} /><Route path="/security/two-step" element={<TwoStepPage />} /><Route path="/security" element={<SecurityReportPage />} /><Route path="/payout/cancel" element={<PayoutCancelPage />} />
     <Route element={<GuestOnly />}><Route path="/welcome" element={<Welcome />} /><Route path="/login" element={<Login />} /><Route path="/invite" element={<Invite />} /></Route>
     <Route path="/confirmed" element={<Confirmed />} />
     <Route path="/signup" element={<SignupRoute />} />
@@ -119,7 +125,7 @@ function AppRoutes() {
 const Router = import.meta.env.MODE === 'single' ? MemoryRouter : BrowserRouter;
 
 export default function App() {
-  return <SessionProvider><ToastProvider><Router><AccountGateProvider><ScrollTop /><AppRoutes /></AccountGateProvider></Router></ToastProvider></SessionProvider>;
+  return <SessionProvider><ToastProvider><Router><AccountGateProvider><ScrollTop /><AppRoutes /><ReauthHost /></AccountGateProvider></Router></ToastProvider></SessionProvider>;
 }
 
 function ScrollTop() { const { pathname } = useLocation(); useEffect(() => { window.scrollTo(0, 0); }, [pathname]); return null; }

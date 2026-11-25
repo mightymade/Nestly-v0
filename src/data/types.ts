@@ -1,17 +1,24 @@
 export type Role = 'student' | 'custodian' | 'owner' | 'admin';
 export type OwnerStatus = 'incomplete' | 'pending' | 'approved' | 'rejected';
 
-export interface University { id: string; name: string; short: string; domain: string; area: string; lat: number; lng: number; /** Square logo as a data URL, added by an admin. */ logo?: string;
+export interface University { id: string; name: string; short: string; domain: string; area: string; lat: number; lng: number;
+  /** True once an admin has seen this university's student emails arrive. Off: students verify with their student ID. */ emailOk?: boolean; /** Square logo as a data URL, added by an admin. */ logo?: string;
   /** The university's teaching calendar. Hostels use these dates until the owner sets their own. */ sems?: { start: string; end: string }[] }
 
 export interface User {
   id: string; role: Role; name: string; email: string; password: string;
   username?: string; phone?: string; photo?: string;
   universityId?: string; emailVerified: boolean; verifiedUntil?: string;
+  /** How a student is verified: 'email' (university email link) or 'id' (student ID checked by an admin). */
+  verifyVia?: 'email' | 'id'; studentNo?: string;
+  /** Student ID route only: where the admin's check is, and the reason if the ID was not accepted. */
+  idStatus?: 'none' | 'needs_photo' | 'pending' | 'approved' | 'rejected'; idNote?: string;
   hostelId?: string; // custodians work at one hostel
   ownerStatus?: OwnerStatus; ownerNote?: string; // owners only
   /** The owner's own account. Students' booking fees are paid straight into it; Nestly never holds the money. */
   payout?: { method: 'mtn' | 'airtel' | 'bank'; to: string; name: string; bank?: string };
+  /** A requested payout account change: it starts 24 hours after payoutPendingAt, and after an admin check when payoutReview is true. */
+  payoutPending?: { method: 'mtn' | 'airtel' | 'bank'; to: string; name: string; bank?: string }; payoutPendingAt?: string; payoutReview?: boolean;
   /** Monthly Nestly subscription, paid by the owner. Last day it covers (ISO date). */
   subPaidUntil?: string;
   /** Extra time an admin gave before listings can be paused for an unpaid subscription (ISO date). */ subGraceUntil?: string;
@@ -53,7 +60,7 @@ export interface Notification { id: string; userId: string; kind: 'booking' | 'p
 export interface Invite { code: string; hostelId: string; invitedBy: string; email: string; name: string; used: boolean; at?: string; cancelled?: boolean }
 export interface Mail { id: string; to: string; subject: string; body: string; token?: string; when: string }
 
-export interface VerificationDoc { id: string; ownerId: string; hostelId?: string; kind: 'national_id' | 'selfie' | 'ownership' | 'trading_licence'; fileName: string; url: string; uploadedAt: string; status: 'pending' | 'accepted' | 'rejected'; note?: string;
+export interface VerificationDoc { id: string; ownerId: string; hostelId?: string; kind: 'national_id' | 'selfie' | 'ownership' | 'trading_licence' | 'student_id' | 'student_selfie'; fileName: string; url: string; uploadedAt: string; status: 'pending' | 'accepted' | 'rejected'; note?: string;
   /** Live data only: a short-lived link to open a PDF. Images use `url`. */ link?: string }
 export interface Payout { id: string; ownerId: string; amount: number; method: 'mtn' | 'airtel' | 'bank'; to: string; status: 'scheduled' | 'paid'; date: string; bookings: string[] }
 export interface AuditEntry { id: string; at: string; actorId: string; actorRole: Role; action: string; target: string; detail: string }

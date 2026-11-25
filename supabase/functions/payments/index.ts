@@ -155,9 +155,12 @@ export async function handle(req: Request, env: Env): Promise<Response> {
   let amount = 0;
   const pay: Record<string, unknown> = { tx_ref: txRef, user_id: me.id, network, phone, kind: input.kind };
 
+  // At most 10 payment starts in 10 minutes per person.
+  const { data: okRate } = await db.rpc('rate_ok', { p_key: 'pay:' + me.id, p_max: 10, p_seconds: 600 });
+  if (okRate === false) return fail('Too many payment tries. Wait a few minutes.', 429);
   if (input.kind === 'booking') {
     if (me.role !== 'student') return fail('Only students book rooms.', 403);
-    if (!me.email_verified) return fail('Confirm your student email before booking.');
+    if (!me.email_verified) return fail(me.verify_via === 'id' ? 'Your student ID is not approved yet. You can book once it is.' : 'Confirm your student email before booking.');
     const { data: h } = await db.from('hostels').select('*').eq('id', String(input.hostel_id ?? '')).maybeSingle();
     if (!h || h.status !== 'live') return fail('This hostel is not taking bookings right now.');
     const { data: uni } = await db.from('universities').select('sems').eq('id', h.uni).maybeSingle();
@@ -170,8 +173,9 @@ export async function handle(req: Request, env: Env): Promise<Response> {
     for (const o of old ?? []) await db.rpc('fail_payment', { p_tx_ref: o.tx_ref });
     const { count } = await db.from('bookings').select('id', { count: 'exact', head: true }).eq('user_id', me.id).eq('sem', SEM).neq('status', 'cancelled');
     if (count) return fail('You already have a booking for this semester.');
-    const { data: b, error } = await db.from('bookings').insert({ user_id: me.id, hostel_id: h.id, room: type.t, sem: SEM, fee: h.fee, status: 'pending', tx_ref: txRef, method: network, paid_on: '' }).select().single();
-    if (error) return fail('We could not start the booking. Try again.', 500);
+    // Holds the bed under a lock, so two students cannot both take the last one (finding F5).
+    const { data: b, error } = await db.rpc('start_booking', { p_user: me.id, p_hostel: h.id, p_type: type.t, p_sem: SEM, p_fee: h.fee, p_tx: txRef, p_method: network });
+    if (error) return fail(/last room|not taking|Pick a room/.test(error.message) ? error.message : 'We could not start the booking. Try again.', /last room/.test(error.message) ? 409 : 500);
     amount = h.fee;
     Object.assign(pay, { amount, booking_id: b.id, hostel_id: h.id, sem_end: sem.end });
   } else if (input.kind === 'subscription') {

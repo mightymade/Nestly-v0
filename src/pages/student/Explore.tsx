@@ -13,7 +13,7 @@ import { AMENITIES } from '../../data/catalog';
 import type { Hostel } from '../../data/types';
 import { ugx } from '../../lib/format';
 import { useIsPhone } from '../../lib/useIsPhone';
-import { allUniversities, listHostels, minPrice, savedIds, universityById } from '../../services/api';
+import { allUniversities, listHostels, minPrice, savedIds, universityById, verifyNote } from '../../services/api';
 import { useUser } from '../../services/session';
 import { UniLogo } from '../../components/UniLogo';
 import { useData } from '../../services/useData';
@@ -73,8 +73,8 @@ export function Explore() {
 
     {me && uniId !== home && <div className="banner warn"><GraduationCap size={18} className="ic" /><span className="grow">You are looking at hostels near <b>{uni.short}</b>, not your university.</span>
       <Btn kind="secondary" size="sm" onClick={() => pickUni(home)}><Undo2 size={15} />Back to {universityById(home)?.short}</Btn></div>}
-    {me && !me.emailVerified && <div className="banner primary"><MailWarning size={18} className="ic" /><span className="grow"><b>Confirm your student email to book.</b> You can browse now.</span>
-      <Link to="/signup" className="btn btn-primary btn-sm">Confirm email</Link></div>}
+    {me && !me.emailVerified && <div className="banner primary"><MailWarning size={18} className="ic" /><span className="grow"><b>{verifyNote(me)}</b> You can browse now.</span>
+      <Link to="/signup" className="btn btn-primary btn-sm">{me.verifyVia === 'id' ? (me.idStatus === 'rejected' ? 'Send new photos' : me.idStatus === 'needs_photo' ? 'Add photos' : 'See status') : 'Confirm email'}</Link></div>}
 
         <div className="results-head"><span className="count">{loading && !data ? 'Loading hostels' : <>Showing <b className="num">{list.length}</b>{list.length === 1 ? 'hostel' : 'hostels'}{q && <> matching "{q}"</>}</>}</span>
           <Dropdown label="Sort hostels" icon={ArrowUpDown} value={sort} options={SORTS} onChange={setSort} align="right" /></div>
@@ -106,8 +106,8 @@ export function Explore() {
 
     {me && uniId !== home && <div className="banner warn"><GraduationCap size={18} className="ic" /><span className="grow">You are looking at hostels near <b>{uni.short}</b>, not your university.</span>
       <Btn kind="secondary" size="sm" onClick={() => pickUni(home)}><Undo2 size={15} />Back to {universityById(home)?.short}</Btn></div>}
-    {me && !me.emailVerified && <div className="banner primary"><MailWarning size={18} className="ic" /><span className="grow"><b>Confirm your student email to book.</b> You can browse now.</span>
-      <Link to="/signup" className="btn btn-primary btn-sm">Confirm email</Link></div>}
+    {me && !me.emailVerified && <div className="banner primary"><MailWarning size={18} className="ic" /><span className="grow"><b>{verifyNote(me)}</b> You can browse now.</span>
+      <Link to="/signup" className="btn btn-primary btn-sm">{me.verifyVia === 'id' ? (me.idStatus === 'rejected' ? 'Send new photos' : me.idStatus === 'needs_photo' ? 'Add photos' : 'See status') : 'Confirm email'}</Link></div>}
 
     {error ? <ErrorState message={error} onRetry={reload} />
       : loading && !data ? <div className="x-list">{Array.from({ length: 5 }, (_, i) => <div key={i} className="skel" style={{ height: 124 }} />)}</div>
@@ -171,7 +171,7 @@ function FilterModal({ f, setF, count, onClose }: { f: Filters; setF: (f: Filter
       <div className="row between tiny muted num"><span>{ugx(400000)}</span><span>{ugx(MAX)}</span></div>
     </div>
     <Group title={<h3>Room type</h3>}><div className="chips">{(['any', 'single', 'double'] as const).map(k => <Chip key={k} on={f.type === k} onClick={() => setF({ ...f, type: k })}>{k === 'any' ? 'Any' : k === 'single' ? 'Single' : 'Double'}</Chip>)}</div>
-      <label className="check" style={{ marginTop: 6 }}><input type="checkbox" checked={f.sc} onChange={e => setF({ ...f, sc: e.target.checked })} />Self-contained only (own bathroom)</label></Group>
+      <label className="check" style={{ marginTop: 8 }}><input type="checkbox" checked={f.sc} onChange={e => setF({ ...f, sc: e.target.checked })} />Self-contained only (own bathroom)</label></Group>
     <Group title={<h3>Amenities</h3>}><div className="chips">{Object.entries(AMENITIES).map(([k, l]) => <Chip key={k} on={f.amen.includes(k)} onClick={() => setF({ ...f, amen: f.amen.includes(k) ? f.amen.filter(x => x !== k) : [...f.amen, k] })}>{l}</Chip>)}</div></Group>
     <Group title={<h3>Minimum rating</h3>}><div className="chips">{([[0, 'Any'], [4, '4.0 and up'], [4.5, '4.5 and up']] as const).map(([k, l]) => <Chip key={k} on={f.minR === k} onClick={() => setF({ ...f, minR: k })}>{l}</Chip>)}</div></Group>
   </Overlay>;

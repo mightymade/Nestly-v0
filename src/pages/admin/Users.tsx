@@ -24,7 +24,7 @@ type Row = Awaited<ReturnType<typeof listUsers>>[number];
 type Tab = 'student' | 'owner' | 'custodian';
 
 const status = (r: Row) => r.user.suspended ? <Pill tone="danger">Paused</Pill>
-  : r.user.role === 'student' ? (r.user.emailVerified ? <Pill tone="success">Verified</Pill> : <Pill tone="warn">Email not confirmed</Pill>)
+  : r.user.role === 'student' ? (r.user.emailVerified ? <Pill tone="success">{r.user.verifyVia === 'id' ? 'Verified by ID' : 'Verified'}</Pill> : <Pill tone="warn">{r.user.verifyVia === 'id' ? (r.user.idStatus === 'rejected' ? 'ID rejected' : r.user.idStatus === 'needs_photo' ? 'No ID photos yet' : 'ID being checked') : 'Email not confirmed'}</Pill>)
   : r.user.role === 'owner' ? (r.user.ownerStatus === 'approved' ? <Pill tone="success">Approved</Pill> : r.user.ownerStatus === 'rejected' ? <Pill tone="danger">Rejected</Pill> : <Pill tone="warn">{r.user.ownerStatus === 'pending' ? 'In review' : 'Signing up'}</Pill>)
   : <Pill tone="success">Active</Pill>;
 

@@ -68,7 +68,7 @@ export function HostelPage() {
     <header className="hp-head">
       <button className="round-btn" onClick={back} aria-label="Back to Explore"><ChevronLeft size={20} /></button>
       <div className="hp-titles">
-        <div className="row-sm" style={{ gap: 10 }}><h1 className="clamp1">{h.name}</h1>
+        <div className="row-sm" style={{ gap: 8 }}><h1 className="clamp1">{h.name}</h1>
           {h.verified && <span className="hp-ver" title="The owner's identity and documents were checked by Nestly"><BadgeCheck size={16} />Verified</span>}</div>
         <p className="hp-meta"><Rating value={h.rating} count={h.nRev} /><span className="dotsep" /><span className="row-sm"><MapPin size={14} />{h.km} km from {uniShort}</span><span className="dotsep" /><span>{h.area}</span></p>
       </div>
@@ -116,7 +116,7 @@ export function HostelPage() {
           <div><span className="muted">Semester</span><span>{sem ? <>{semName(sem)}<span className="tiny muted" style={{ display: 'block', textAlign: 'right' }}>{semDates(sem)}</span></> : 'Not taking bookings'}</span></div>
           <div><span className="muted">Rent for the semester</span><span className="num">{ugx(r.price)}</span></div>
           <div><span className="muted">Booking fee, pay now (counts toward rent)</span><span className="num">{ugx(h.fee)}</span></div>
-          <div style={{ borderTop: '1px dashed var(--bar-muted)', paddingTop: 10, fontWeight: 800 }}><span>Balance, pay at check-in</span><span className="num">{ugx(Math.max(0, r.price - h.fee))}</span></div>
+          <div style={{ borderTop: '1px dashed var(--bar-muted)', paddingTop: 8, fontWeight: 800 }}><span>Balance, pay at check-in</span><span className="num">{ugx(Math.max(0, r.price - h.fee))}</span></div>
         </div>
         <ol className="hp-steps">
           <li><span><b>Pay the booking fee</b> with Mobile Money. It is taken off your rent.</span></li>
@@ -173,7 +173,7 @@ function Sections({ h, reviews, room, onRoom, onReport }: { h: Hostel; reviews: 
   return <>
     <Card title="About" subtitle={`Run by ${h.ownerName}`}>
       <p>{h.about}</p>
-      <div className="row wrap" style={{ gap: 20, marginTop: 14 }}><span className="row-sm small"><span className="icon-tile sm"><Clock size={16} /></span>Visiting hours {h.visit}</span>
+      <div className="row wrap" style={{ gap: 20, marginTop: 16 }}><span className="row-sm small"><span className="icon-tile sm"><Clock size={16} /></span>Visiting hours {h.visit}</span>
         <span className="row-sm small"><span className="icon-tile sm"><QrCode size={16} /></span>Visitors sign in with a QR code</span></div>
     </Card>
     <Card title="Rooms" subtitle="Pick a room type to see its price"><RoomList h={h} sel={room} onSel={onRoom} /></Card>
@@ -183,7 +183,7 @@ function Sections({ h, reviews, room, onRoom, onReport }: { h: Hostel; reviews: 
     <Card title="Reviews" subtitle="Only students who stayed here can review">
       <div className="reviews-sum">
         <div><div className="big num">{h.rating.toFixed(1)}</div><Stars n={Math.round(h.rating)} /><p className="small muted" style={{ marginTop: 4 }}>{h.nRev} reviews</p></div>
-        <div className="stack-sm">{dist.map((c, i) => <div key={i} className="dist-row"><span className="row-sm" style={{ gap: 2 }}>{5 - i}</span><span className="bar"><i style={{ width: `${(c / maxD) * 100}%` }} /></span><span className="num">{c}</span></div>)}</div>
+        <div className="stack-sm">{dist.map((c, i) => <div key={i} className="dist-row"><span className="row-sm" style={{ gap: 4 }}>{5 - i}</span><span className="bar"><i style={{ width: `${(c / maxD) * 100}%` }} /></span><span className="num">{c}</span></div>)}</div>
       </div>
       <div>{reviews.length ? reviews.map(v => <div className="review" key={v.id}>
         <div className="row between wrap"><span className="row-sm"><b className="ink">{v.who}</b><Pill tone="success"><Check size={12} />Stayed here</Pill></span><span className="row-sm"><span className="small muted">{v.when}</span><button className="rv-report" onClick={() => onReport(v)} aria-label={`Report the review by ${v.who}`} title="Report this review"><Flag size={14} /></button></span></div>

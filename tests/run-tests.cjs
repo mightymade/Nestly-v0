@@ -18,6 +18,20 @@ const sql = q => execSync(`psql "${PG}" -tAc "${q.replace(/"/g, '\\"')}"`).toStr
 const stamp = Date.now().toString(36).slice(-5);
 const NEW_STUDENT = { name: 'Brenda Achieng', email: `brenda.${stamp}@ucu.ac.ug`, pw: 'nestly123x' };
 
+// Two-step login: admins must use it. The test database starts each run with no factors, the first admin login
+// sets one up from the key shown on screen, and later logins type the current code.
+let totpSecret = null;
+const b32 = s => { const a = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; let bits = ''; for (const c of s.replace(/[=\s]+/g, '')) bits += a.indexOf(c).toString(2).padStart(5, '0'); return Buffer.from(bits.match(/.{8}/g).map(b => parseInt(b, 2))); };
+const totp = secret => { const c = Buffer.alloc(8); c.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30000))); const h = require('crypto').createHmac('sha1', b32(secret)).update(c).digest(); const o = h[19] & 15; return String((h.readUInt32BE(o) & 0x7fffffff) % 1e6).padStart(6, '0'); };
+async function passTwoStep(p) {
+  if (!/\/security\/two-step/.test(p.url())) return;
+  if (await p.locator('#ts-first').isVisible().catch(() => false)) {
+    totpSecret = (await p.locator('code').first().innerText()).trim();
+    await p.fill('#ts-first', totp(totpSecret)); await p.click('button:has-text("Turn on two-step login")');
+  } else { await p.fill('#ts-code', totp(totpSecret)); await p.click('button:has-text("Log in")'); }
+  await p.waitForURL(u => !/two-step/.test(u.toString())); await p.waitForTimeout(1200);
+}
+
 const results = [];
 let browser;
 async function open(login, size = { width: 1366, height: 768 }, pw = 'nestly123') {
@@ -27,6 +41,7 @@ async function open(login, size = { width: 1366, height: 768 }, pw = 'nestly123'
   if (login) {
     await p.goto(BASE + '/login'); await p.fill('#login-id', login); await p.fill('#login-pw', pw);
     await p.click('button[type=submit]'); await p.waitForURL(u => !/\/login/.test(u.toString())); await p.waitForTimeout(1500);
+    await passTwoStep(p);
   }
   return p;
 }
@@ -58,6 +73,8 @@ async function finishPayment(p) {
 
 (async () => {
   browser = await chromium.launch();
+  sql('delete from auth.mfa_factors'); // test database only: admins set up two-step login afresh each run
+  sql("update universities set email_ok = true where id = 'ucu'"); // T02 tests the university email route, which admins switch on per university
   const h1 = 'h1';
   const takenBefore = () => sql(`select sum((r->>'taken')::int) from hostels, jsonb_array_elements(rooms) r where id='${h1}'`);
 
@@ -178,7 +195,10 @@ async function finishPayment(p) {
     'Visitor sign-in form opens without an account; visit recorded with time in; custodian sees them inside and can mark them as left',
     async ev => {
       const v = await open(null, { width: 390, height: 844 }); await v.goto(BASE + '/visit/' + h1); await wait(1200);
-      await v.fill('#vq-name', 'Joseph Kato'); await v.fill('#vq-host', 'Sarah'); await wait(1200);
+      await v.fill('#vq-name', 'Joseph Kato');
+      // At the gate a visitor gives the room and part of the name, and sees only "Sarah A." (security finding F3).
+      const room = sql(`select room from tenants where hostel_id='${h1}' and status='in' and name like 'Sarah%' limit 1`);
+      await v.fill('#vq-host', room); await v.getByLabel('Their first or last name').fill('Sarah'); await wait(1200);
       await v.locator('.host-list button, [role=option]').first().click(); await v.fill('#vq-phone', '0772 555 101');
       await v.check('input[type=checkbox]'); ev.push(await shot(v, 'T05', '1-visitor-form'));
       await v.click('button:has-text("Sign in")'); await v.getByText("You're signed in").waitFor(); ev.push(await shot(v, 'T05', '2-pass'));

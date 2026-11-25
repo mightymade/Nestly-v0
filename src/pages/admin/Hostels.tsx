@@ -109,7 +109,7 @@ function PhotoStrip({ h }: { h: Hostel }) {
     {photos.length === 0 && <span style={{ ...pill, left: 10, bottom: 10, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>No photos yet</span>}
     {count > 1 && <>
       <span aria-hidden="true" style={{ ...pill, right: 10, top: 10, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>{at + 1} / {count}</span>
-      {count <= 10 && <div style={{ ...pill, left: '50%', transform: 'translateX(-50%)', bottom: 10, display: 'flex', gap: 6, padding: '6px 9px' }}>
+      {count <= 10 && <div style={{ ...pill, left: '50%', transform: 'translateX(-50%)', bottom: 10, display: 'flex', gap: 8, padding: '6px 9px' }}>
         {photos.map((_, i) => <button key={i} type="button" onClick={() => go(i)} aria-label={`Photo ${i + 1} of ${count}`} aria-current={i === at}
           style={{ width: i === at ? 18 : 6, height: 6, padding: 0, borderRadius: 99, background: i === at ? '#fff' : 'rgba(255,255,255,.55)', transition: 'width .2s, background .2s' }} />)}</div>}
     </>}

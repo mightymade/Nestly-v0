@@ -63,12 +63,12 @@ function Account({ inv }: { inv: Inv }) {
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
   return <form className="stack" onSubmit={go} noValidate>
     <div className="inv-card"><div className="thumb"><Art hostel={inv.hostel} /></div>
-      <div className="min0"><span><b>{inv.invitedBy}</b> invited you to look after</span><b className="row-sm ink"><Building2 size={14} />{inv.hostel.name}</b><span className="tiny muted clamp1">Login email: {inv.email}</span></div></div>
+      <div className="min0"><span><b>{inv.invitedBy}</b> invited you to look after</span><b className="row-sm ink"><Building2 size={14} />{inv.hostel.name}</b>{inv.email && <span className="tiny muted clamp1">Login email: {inv.email}</span>}</div></div>
     <div className="f2">
       <Field id="iv-name" label="Full name" error={err.name}><TextInput id="iv-name" value={f.name} onChange={set('name')} error={err.name} autoComplete="name" /></Field>
       <Field id="iv-user" label="Username" error={err.username} hint={avail === true ? <span className="ok-text"><Check size={13} /> Available</span> : avail === false ? <span className="err">Taken. Try another.</span> : 'Log in with this or your email.'}>
         <TextInput id="iv-user" value={f.username} onChange={e => setF({ ...f, username: e.target.value.toLowerCase().replace(/\s/g, '') })} error={err.username} autoComplete="username" placeholder="agnes.n" /></Field>
-      <div className="span stack" style={{ gap: 10 }}><Field id="iv-pw" label="Password" error={err.password}><PasswordInput id="iv-pw" placeholder="••••••••" value={f.password} onChange={set('password')} error={err.password} autoComplete="new-password" /></Field>
+      <div className="span stack" style={{ gap: 8 }}><Field id="iv-pw" label="Password" error={err.password}><PasswordInput id="iv-pw" placeholder="••••••••" value={f.password} onChange={set('password')} error={err.password} autoComplete="new-password" /></Field>
         {!err.password && <PasswordStrength value={f.password} />}</div>
     </div>
     {err.form && <span className="err">{err.form}</span>}

@@ -9,8 +9,43 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
+    <style>
+      /* Splash screen: shown from the first byte until the app is ready, in the person's own light or dark colours. */
+      #splash { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+        background: #F2F4FA; color: #1A1C29; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        transition: opacity .35s ease, visibility .35s ease }
+      [data-splash="dark"] #splash { background: #12141C; color: #F2F3F8 }
+      #splash.out { opacity: 0; visibility: hidden; pointer-events: none }
+      .sp-mark { width: 72px; height: 72px; animation: sp-in .5s cubic-bezier(.2, .8, .2, 1) both, sp-breathe 2.4s ease-in-out .5s infinite }
+      .sp-mark svg { width: 100%; height: 100%; display: block; fill: #4F5BEA; overflow: visible }
+      .sp-lens { transform-box: view-box; transform-origin: 501.68px 450.55px; animation: sp-search 2.4s ease-in-out .5s infinite }
+      .sp-word { margin-top: 16px; font-size: 24px; line-height: 32px; font-weight: 800; letter-spacing: -.02em; animation: sp-up .5s cubic-bezier(.2, .8, .2, 1) .12s both }
+      .sp-bar { position: relative; width: 120px; height: 4px; margin-top: 24px; border-radius: 99px; overflow: hidden; background: #E3E6EF; animation: sp-up .5s cubic-bezier(.2, .8, .2, 1) .2s both }
+      [data-splash="dark"] .sp-bar { background: #2A2E3D }
+      .sp-bar span { position: absolute; top: 0; bottom: 0; left: 0; width: 40%; border-radius: 99px; background: #4F5BEA; animation: sp-slide 1.2s cubic-bezier(.65, 0, .35, 1) infinite }
+      [data-splash="dark"] .sp-bar span { background: #8C94FF }
+      .sp-note { margin-top: 16px; font-size: 14px; line-height: 20px; color: #676C82; animation: sp-up .5s cubic-bezier(.2, .8, .2, 1) .28s both }
+      [data-splash="dark"] .sp-note { color: #9298AE }
+      @keyframes sp-in { from { opacity: 0; transform: scale(.85) } to { opacity: 1; transform: scale(1) } }
+      @keyframes sp-up { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+      @keyframes sp-breathe { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.04) } }
+      /* The lens moves in a small loop, like someone searching a map. */
+      @keyframes sp-search { 0%, 100% { transform: translate(0, 0) } 25% { transform: translate(28px, -20px) } 50% { transform: translate(0, -36px) } 75% { transform: translate(-28px, -20px) } }
+      @keyframes sp-slide { 0% { transform: translateX(-100%) } 100% { transform: translateX(250%) } }
+      @media (prefers-reduced-motion: reduce) {
+        .sp-mark, .sp-lens, .sp-word, .sp-bar, .sp-note, .sp-bar span { animation: none }
+        .sp-bar span { width: 100%; opacity: .5 }
+      }
+    </style>
+    <script src="/boot.js"></script>
   </head>
   <body>
+    <div id="splash" role="status" aria-live="polite">
+      <div class="sp-mark"><svg viewBox="0 0 925.28 925.28" aria-hidden="true"><rect x="110" y="70" width="705" height="760" rx="90" fill="#fff"/><path class="sp-tile" d="M700.6,0H224.68C100.59,0,0,100.59,0,224.68v475.91c0,124.09,100.59,224.68,224.68,224.68h475.91c124.09,0,224.68-100.59,224.68-224.68V224.68C925.28,100.59,824.68,0,700.6,0ZM755.6,413.87c-.11,92.88.09,278.96-.08,293.75-3.94,32.3-31.45,60.2-63.98,63.84-116.53-1.38-437.12,3.01-466.16-2.34-34.16-9.12-53.01-40.5-54.12-74.2-5.69-107.39,4.22-219.89.63-327.85.73-9.22,3.06-19.03,6.65-26.6,3.33-7.23,7.86-13.63,13.75-19.85,75.3-65.74,160.97-120.73,241.22-180.07,17.58-9.26,39.56-9.04,57.83-1.9,78.03,55.69,160.57,112.42,234.76,172.8l.13.12c35.03,31.92,29.09,47.06,29.37,102.3Z"/><g class="sp-lens"><path d="M501.68,297.95c-84.28,0-152.6,68.32-152.6,152.6s68.32,152.6,152.6,152.6,152.6-68.32,152.6-152.6-68.32-152.6-152.6-152.6ZM501.68,547.93c-53.78,0-97.38-43.6-97.38-97.38s43.6-97.38,97.38-97.38,97.38,43.6,97.38,97.38-43.6,97.38-97.38,97.38Z"/><rect x="245.75" y="593.41" width="152.37" height="68.46" rx="34.23" transform="translate(-349.51 411.47) rotate(-45)"/></g></svg></div>
+      <div class="sp-word">Nestly</div>
+      <div class="sp-bar"><span></span></div>
+      <p class="sp-note">Getting your hostels ready</p>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

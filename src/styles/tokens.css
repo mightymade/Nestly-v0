@@ -17,7 +17,7 @@
   --primary-soft: #ECEEFF;
   --primary-ink: #3A45C9;
   --primary-glow: rgba(79, 91, 234, .32);
-  --hero: linear-gradient(135deg, #5561EE 0%, #3D49D4 100%);
+  --hero: #3A44CC; /* flat brand colour: no decorative gradients */
   --on-primary: #FFFFFF;
   --success: #15803D; --success-bg: #DCFCE7; --success-solid: #22C55E;
   --danger: #C42B30; --danger-bg: #FEE4E2; --danger-solid: #E5484D;
@@ -31,9 +31,10 @@
   --shadow-sm: 0 1px 2px rgba(20, 24, 40, .05);
   --shadow: 0 1px 2px rgba(20, 24, 40, .04), 0 10px 30px rgba(20, 24, 40, .06);
   --shadow-lg: 0 2px 4px rgba(20, 24, 40, .05), 0 18px 44px rgba(20, 24, 40, .12);
-  --ring: 0 0 0 2px var(--primary);
+  --ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
+  --ctl-h: 40px; --ctl-h-sm: 32px; /* buttons and inputs: 40px on desktop, 48px on touch screens (below) */
 
-  --r-frame: 28px; --r-card: 22px; --r-tile: 14px; --r-ctl: 12px; --r-pill: 999px;
+  --r-frame: 16px; --r-card: 12px; --r-tile: 8px; --r-ctl: 8px; --r-pill: 999px;
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px; --s10: 40px;
   --card-pad: 24px; --gap: 20px;
 
@@ -53,13 +54,13 @@
   --ink: #F2F3F8;
   --text: #C9CCD8;
   --muted: #9298AE;
-  --primary: #6B76FF;
-  --primary-hover: #7C86FF;
+  --primary: #8C94FF; /* text and icons on dark surfaces: 5.5:1 or better */
+  --primary-hover: #9EA5FF;
   --primary-fill: #525CEB; --primary-fill-hover: #4A54E2;
   --primary-soft: #262B52;
   --primary-ink: #AEB4FF;
   --primary-glow: rgba(107, 118, 255, .35);
-  --hero: linear-gradient(135deg, #5A65F0 0%, #3A45C9 100%);
+  --hero: #3A44CC;
   --on-primary: #FFFFFF;
   --success: #4ADE80; --success-bg: rgba(34, 197, 94, .18);
   --danger: #FF8A8E; --danger-bg: rgba(229, 72, 77, .18);
@@ -74,6 +75,7 @@
   color-scheme: dark;
 }
 @media (max-width: 899px) { :root { --card-pad: 16px; --gap: 12px } }
+@media (max-width: 899px), (pointer: coarse) { :root { --ctl-h: 48px; --ctl-h-sm: 40px } }
 
 /* Soft fills used by some cards. They follow the theme through the -bg tokens. */
 :root { --danger-soft: var(--danger-bg); --success-soft: var(--success-bg) }

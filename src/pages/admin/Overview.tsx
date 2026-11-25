@@ -1,12 +1,13 @@
-import { ArrowRight, Building2, CheckCircle2, ClipboardCheck, Flag, History, UserCheck, Wallet } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, GraduationCap, ArrowRight, Building2, CheckCircle2, ClipboardCheck, Flag, History, UserCheck, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/Card';
 import { PageHeader } from '../../components/PageHeader';
 import { ErrorState } from '../../components/States';
-import { Skeleton } from '../../components/ui';
+import { Skeleton, ActionButton } from '../../components/ui';
 import { timeAgo, ugx } from '../../lib/format';
 import { useIsPhone } from '../../lib/useIsPhone';
-import { adminOverview } from '../../services/api';
+import { adminOverview, closeSecurityReport, listSecurityReports, securitySignals } from '../../services/api';
+import { useToast } from '../../components/Toast';
 import { waited } from './Reviews';
 import { useData } from '../../services/useData';
 
@@ -26,6 +27,7 @@ export function AdminOverview() {
   const items: [number, string, string, typeof Flag, string, boolean][] = [
     [q.flags, q.flags === 1 ? 'open report' : 'open reports', '/a/flags', Flag, 'safety and payment problems first', true],
     [q.owners, q.owners === 1 ? 'owner waiting for review' : 'owners waiting for review', '/a/reviews?tab=owners', UserCheck, d.ownersSince ? `oldest has waited ${waited(d.ownersSince)}` : '', false],
+    [q.students, q.students === 1 ? 'student ID waiting for review' : 'student IDs waiting for review', '/a/reviews?tab=students', GraduationCap, q.studentsSince ? `oldest has waited ${waited(q.studentsSince)}` : '', false],
     [q.listings, q.listings === 1 ? 'listing waiting for review' : 'listings waiting for review', '/a/reviews?tab=listings', ClipboardCheck, q.oldest ? `oldest has waited ${waited(q.oldest)}` : '', false],
     [m.late, m.late === 1 ? 'owner is late paying' : 'owners are late paying', '/a/subscriptions', Wallet, `owe ${ugx(m.owed)} in total`, false],
   ];
@@ -51,5 +53,33 @@ export function AdminOverview() {
     <ul className="act-list">{d.recent.map(a => <li key={a.id}><span className="icon-tile sm"><Building2 size={15} /></span>
       <span className="grow small"><b className="ink">{a.actor}</b> {a.action.toLowerCase()}: {a.target}{a.detail && <span className="muted"> · {a.detail}</span>}</span><span className="tiny muted nowrap">{timeAgo(a.at)}</span></li>)}</ul>
   </Card>;
-  return <><PageHeader title="Overview" />{phone ? <>{queue}{strip}{recent}</> : <div className="fill-col fill">{strip}{queue}{recent}</div>}</>;
+  return <><PageHeader title="Overview" />{phone ? <>{queue}<SecurityCard />{strip}{recent}</> : <div className="fill-col fill">{strip}{queue}<SecurityCard />{recent}</div>}</>;
+}
+
+/**
+ * Security: things worth a look (repeated wrong passwords, one phone paying for many students, many cancellations,
+ * shared student numbers, payout changes) and problems reported through the /security page.
+ */
+function SecurityCard() {
+  const toast = useToast();
+  const { data } = useData(() => securitySignals(), []);
+  const { data: reports, reload } = useData(() => listSecurityReports(), []);
+  const open = (reports ?? []).filter(r => !r.closed);
+  const rows: { tone: 'warn' | 'danger'; text: string; to?: string }[] = [];
+  data?.failedLogins.forEach(f => rows.push({ tone: 'danger', text: `${f.n} wrong passwords for "${f.login}" in 24 hours. Possible guessing.`, to: '/a/users' }));
+  data?.sharedPayers.forEach(f => rows.push({ tone: 'warn', text: `Phone ending ${f.phone.slice(-4)} paid for ${f.students} different students in 30 days.` }));
+  data?.cancellations.forEach(f => rows.push({ tone: 'warn', text: `${f.n} cancellations at ${f.name} this week.`, to: '/a/hostels' }));
+  data?.studentNumbers.forEach(f => rows.push({ tone: 'warn', text: `${f.n} accounts use student number ${f.number} (${f.uni}).`, to: '/a/reviews?tab=students' }));
+  data?.payoutChanges.forEach(f => rows.push({ tone: f.review ? 'danger' : 'warn', text: `${f.name} is changing their payout account${f.review ? ` to one named ${f.accountName}` : ''}.`, to: f.review ? '/a/reviews?tab=payouts' : '/a/users' }));
+  if (!data && !reports) return null;
+  return <Card title="Security" subtitle={rows.length || open.length ? 'Worth a look' : 'Nothing unusual'}>
+    {!rows.length && !open.length ? <p className="small muted row-sm"><ShieldCheck size={15} />No warning signs, and no open security reports.</p>
+      : <ul className="act-list">
+        {rows.map((r, i) => <li key={i}><span className={'icon-tile sm ' + (r.tone === 'danger' ? 'danger' : 'warn')}><ShieldAlert size={15} /></span>
+          <span className="grow small">{r.text}</span>{r.to && <Link to={r.to} className="btn btn-text btn-sm">Open</Link>}</li>)}
+        {open.map(r => <li key={r.id}><span className="icon-tile sm danger"><ShieldAlert size={15} /></span>
+          <span className="grow small"><b className="ink">Security report</b> {timeAgo(r.at)}: {r.text}{r.contact && <span className="muted"> · Contact: {r.contact}</span>}</span>
+          <ActionButton className="btn btn-text btn-sm" onClick={async () => { await closeSecurityReport(r.id); toast('Report closed'); reload(); }}>Close</ActionButton></li>)}
+      </ul>}
+  </Card>;
 }

@@ -2,7 +2,7 @@ import { BedDouble, Building2, CalendarDays, ClipboardCheck, Compass, Flag, Grad
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { NotificationBell } from '../components/NotificationBell';
-import { Avatar, Logo, VerifiedName } from '../components/ui';
+import { Avatar, Logo, VerifiedName, ActionButton } from '../components/ui';
 import { setThemeUser } from '../lib/theme';
 import type { Role } from '../data/types';
 import { useIsPhone } from '../lib/useIsPhone';
@@ -67,7 +67,7 @@ function SideFoot({ role }: { role: Role }) {
     <div className="side-me">
       <Link to={SETTINGS[role]} className="side-user" aria-label="Your account">
         <Avatar user={me} size={40} /><span className="grow" style={{ minWidth: 0 }}><VerifiedName user={me} className="name" /><span className="role clamp1" style={{ display: 'block' }}>{label}</span></span></Link>
-      <button className="logout-icon" onClick={async () => { await logout(); nav('/welcome', { replace: true }); }} aria-label="Log out" title="Log out"><LogOut size={19} /></button>
+      <ActionButton className="logout-icon" onClick={async () => { await logout(); nav('/welcome', { replace: true }); }} aria-label="Log out" title="Log out"><LogOut size={19} /></ActionButton>
     </div>
   </div>;
 }

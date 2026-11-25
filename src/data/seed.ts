@@ -87,6 +87,8 @@ export function seed(): DB {
       payout: { method: 'mtn', to: '0772 454 567', name: 'Grace Namuli' }, joined: daysAgo(520) },
     { id: 'u4', role: 'owner', name: 'Daniel Okello', username: 'daniel.o', email: 'daniel.okello@gmail.com', password: PW, phone: '0759 210 883', emailVerified: true, ownerStatus: 'pending',
       payout: { method: 'airtel', to: '0759 210 883', name: 'Daniel Okello' }, joined: daysAgo(3) },
+    { id: 'u10', role: 'student', name: 'Brian Ssemwanga', email: 'brian.ssemwanga@gmail.com', password: PW, phone: '0783 410 255', universityId: 'ucu', emailVerified: false,
+      verifyVia: 'id', studentNo: 'S25B13/077', idStatus: 'pending', joined: daysAgo(1) },
     { id: 'u9', role: 'admin', name: 'Nestly Admin', username: 'admin', email: 'admin@nestly.app', password: PW, emailVerified: true, joined: daysAgo(600) },
   ];
 
@@ -172,6 +174,8 @@ export function seed(): DB {
     { id: 'd3', ownerId: 'u4', hostelId: 'h19', kind: 'ownership', fileName: 'land-title-namilyango.pdf', url: docSvg('CERTIFICATE OF TITLE', 'Daniel Okello', '#22A06B'), uploadedAt: ago(60 * 30), status: 'pending' },
     { id: 'd4', ownerId: 'u3', kind: 'national_id', fileName: 'id-front.jpg', url: docSvg('NATIONAL ID CARD', 'Grace Namuli', '#5B8DEF'), uploadedAt: daysAgo(520), status: 'accepted' },
     { id: 'd5', ownerId: 'u3', kind: 'selfie', fileName: 'selfie.jpg', url: docSvg('SELFIE', 'Grace Namuli', '#8E9AAF'), uploadedAt: daysAgo(520), status: 'accepted' },
+    { id: 'd8', ownerId: 'u10', kind: 'student_selfie', fileName: 'selfie-with-id.jpg', url: docSvg('SELFIE WITH ID (FICTITIOUS)', 'Brian Ssemwanga', '#0E7C66'), uploadedAt: ago(60 * 20), status: 'pending' },
+    { id: 'd7', ownerId: 'u10', kind: 'student_id', fileName: 'student-id-front.jpg', url: docSvg('STUDENT ID (FICTITIOUS)', 'Brian Ssemwanga', '#6D4BD8'), uploadedAt: ago(60 * 20), status: 'pending' },
     { id: 'd6', ownerId: 'u3', hostelId: 'h1', kind: 'trading_licence', fileName: 'trading-licence-2026.pdf', url: docSvg('TRADING LICENCE', 'Grace Namuli', '#22A06B'), uploadedAt: daysAgo(300), status: 'accepted' },
   ];
   const audit: AuditEntry[] = [

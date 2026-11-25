@@ -99,7 +99,7 @@ export function AdminSubscriptions() {
   const body = error ? <ErrorState message={error} onRetry={reload} /> : loading && !data ? <Skeleton rows={4} h={56} />
     : tab === 'payments' ? (!payments.length ? <EmptyState bare icon={<Receipt size={24} />} title="No payments match" text="Try another date range or search." />
       : phone ? <div className="vgrid">{payments.map(p => <div key={p.id} className="vcard vcard-m"><Avatar user={{ name: p.owner }} size={40} />
-          <div className="vm-info"><div className="vm-line1" style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}><b className="ink clamp1">{p.owner}</b><b className="num ink nowrap">{ugx(p.amount)}</b></div>
+          <div className="vm-info"><div className="vm-line1" style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><b className="ink clamp1">{p.owner}</b><b className="num ink nowrap">{ugx(p.amount)}</b></div>
             <div className="vm-line2"><span className="clamp1">{p.months} month{p.months > 1 ? 's' : ''} · {p.via === 'app' ? 'In the app' : 'Recorded by admin'}</span></div>
             <div className="vm-line3"><span>{shortDate(p.at)}</span><span className="clamp1">· {p.ref}</span></div></div></div>)}</div>
       : <DataTable label="Subscription payments" noun="payments" rows={payments} rowKey={p => p.id} columns={payCols} onRowClick={p => setOpen(p.ownerId)} rowLabel={p => `Open ${p.owner}`} />)
@@ -123,7 +123,7 @@ export function AdminSubscriptions() {
     <PageHeader title="Subscriptions" search={false} actions={exportBtn} />
     {strip}
     <section className="card card-pad fill-card fill grow-y vcard-main" aria-label="Subscriptions">{head}<div className="card-body">{body}
-      <p className="tiny muted" style={{ marginTop: 10 }}>This is Nestly's only income. Students' booking fees go straight to owners and never pass through Nestly.</p></div></section>
+      <p className="tiny muted" style={{ marginTop: 8 }}>This is Nestly's only income. Students' booking fees go straight to owners and never pass through Nestly.</p></div></section>
     {detail}
   </>;
 }

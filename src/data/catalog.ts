@@ -3,7 +3,7 @@ import type { Hostel, University } from './types';
 // Sample domains for the prototype. Confirm each university's real student email format before launch.
 export const UNIVERSITIES: University[] = [
   { id: 'ucu', name: 'Uganda Christian University', short: 'UCU Mukono', domain: 'ucu.ac.ug', area: 'Mukono', lat: 0.3536, lng: 32.7553 },
-  { id: 'mak', name: 'Makerere University', short: 'Makerere', domain: 'mak.ac.ug', area: 'Kampala', lat: 0.3349, lng: 32.5677 },
+  { id: 'mak', name: 'Makerere University', short: 'Makerere', domain: 'mak.ac.ug', area: 'Kampala', lat: 0.3349, lng: 32.5677, emailOk: true },
   { id: 'kyu', name: 'Kyambogo University', short: 'Kyambogo', domain: 'kyu.ac.ug', area: 'Kyambogo', lat: 0.3509, lng: 32.6297 },
   { id: 'mubs', name: 'Makerere University Business School', short: 'MUBS', domain: 'mubs.ac.ug', area: 'Nakawa', lat: 0.3264, lng: 32.6178 },
 ];

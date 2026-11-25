@@ -7,6 +7,7 @@ import { useToast } from '../../components/Toast';
 import { Btn, Field, PasswordInput, TextInput } from '../../components/ui';
 import { live } from '../../services/supabase';
 import { CheckEmail } from '../auth/Signup';
+import { Captcha, captchaOn } from '../../components/Captcha';
 import { ApiError, docsOf, savePayout, signupOwner, submitOwner, subConfig, uploadDoc } from '../../services/api';
 import { ugx } from '../../lib/format';
 import { useUser } from '../../services/session';
@@ -40,7 +41,7 @@ export function OwnerSignup() {
 function AccountStep({ onDone }: { onDone: () => void }) {
   const [f, setF] = useState({ name: '', phone: '', email: '', password: '' });
   const [code, setCode] = useState<string | null>(null); const [typed, setTyped] = useState('');
-  const [err, setErr] = useState<Record<string, string | null>>({}); const [busy, setBusy] = useState(false); const [sent, setSent] = useState(false);
+  const [err, setErr] = useState<Record<string, string | null>>({}); const [busy, setBusy] = useState(false); const [sent, setSent] = useState(false); const [captcha, setCaptcha] = useState(''); const [again, setAgain] = useState(0);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => { setF({ ...f, [k]: e.target.value }); setErr({ ...err, [k]: null }); };
   function check() {
     const x = { name: f.name.trim().split(/\s+/).length < 2 ? 'Enter your first and last name.' : null,
@@ -53,8 +54,10 @@ function AccountStep({ onDone }: { onDone: () => void }) {
     e.preventDefault();
     if (live) {
       // The real version confirms the owner's email instead of texting a code.
-      if (!check()) return; setBusy(true);
-      try { await signupOwner(f); setSent(true); } catch (x) { const a = x as ApiError; setErr({ [a.field ?? 'email']: a.message }); } finally { setBusy(false); }
+      if (!check()) return;
+      if (captchaOn && !captcha) return setErr({ email: 'Please complete the check that you are not a robot.' });
+      setBusy(true);
+      try { await signupOwner({ ...f, captchaToken: captcha || undefined }); setSent(true); } catch (x) { const a = x as ApiError; setErr({ [a.field ?? 'email']: a.message }); setAgain(n => n + 1); } finally { setBusy(false); }
       return;
     }
     if (!code) { if (check()) setCode(String(100000 + Math.floor(Math.random() * 899999))); return; }
@@ -72,6 +75,7 @@ function AccountStep({ onDone }: { onDone: () => void }) {
         <Field id="ow-pw" label="Password" error={err.password}><PasswordInput id="ow-pw" autoComplete="new-password" value={f.password} onChange={set('password')} error={err.password} /></Field>
         {!err.password && <div className="span"><PasswordStrength value={f.password} /></div>}
       </div>
+      <Captcha onToken={setCaptcha} reset={again} />
       <Btn type="submit" block loading={busy}>{live ? 'Create account' : 'Text me a code'}<ArrowRight size={18} /></Btn>
       <p className="tiny muted" style={{ textAlign: 'center' }}>By creating an account you agree to the <Link to="/terms" target="_blank">terms of use</Link> and <Link to="/privacy" target="_blank">privacy policy</Link>.</p>
     </> : <>
@@ -129,7 +133,7 @@ function ReviewStep({ go }: { go: (s: number) => void }) {
   return <div className="stack">
     <div className="review-list">{rows.map(([k, v, s]) => <div key={k} className="review-row"><div className="min0"><span className="tiny muted">{k}</span><b className="ink small clamp1">{v}</b></div>
       {s > 1 && <button className="btn btn-text btn-sm" onClick={() => go(s)}><Pencil size={14} />Edit</button>}</div>)}</div>
-    <p className="small muted row-sm" style={{ alignItems: 'flex-start' }}><Check size={15} color="var(--success)" style={{ flex: 'none', marginTop: 2 }} /><span>You can add your hostel straight after this. Nestly costs {ugx(subConfig().subFee)} a month {subConfig().perHostel ? 'for each live hostel' : 'once a hostel is live'}, and booking fees always go straight to you.</span></p>
+    <p className="small muted row-sm" style={{ alignItems: 'flex-start' }}><Check size={15} color="var(--success)" style={{ flex: 'none', marginTop: 4 }} /><span>You can add your hostel straight after this. Nestly costs {ugx(subConfig().subFee)} a month {subConfig().perHostel ? 'for each live hostel' : 'once a hostel is live'}, and booking fees always go straight to you.</span></p>
     <Btn block loading={busy} onClick={send}>Send for review</Btn>
   </div>;
 }

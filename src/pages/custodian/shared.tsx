@@ -16,13 +16,18 @@ import { useData } from '../../services/useData';
 export const useHostelId = () => useMe().hostelId!;
 
 /** Residents a visitor can choose from. Only people currently living here. */
-type Host = { name: string; room: string };
+type Host = { name: string; room: string; id?: string };
+/** "Sarah Atim" becomes "Sarah A." on a visitor's phone. */
+const shortName = (n?: string) => { const [a, b] = (n ?? '').trim().split(/\s+/); return b ? `${a} ${b[0]!.toUpperCase()}.` : a ?? ''; };
 
 /**
  * "Who are you visiting?" Search by name or room. For privacy, a visitor at the gate sees residents only
  * after typing two letters, so nobody can scroll a full list of who lives in which room.
  */
-export function HostPicker({ hid, id, value, onChange, error, showAll = false }: { hid: string; id: string; value: Host | null; onChange: (h: Host | null) => void; error?: string | null; showAll?: boolean }) {
+export function HostPicker(p: { hid: string; id: string; value: Host | null; onChange: (h: Host | null) => void; error?: string | null; showAll?: boolean; gate?: boolean }) {
+  return p.gate ? <GatePicker {...p} /> : <ListPicker {...p} />;
+}
+function ListPicker({ hid, id, value, onChange, error, showAll = false }: { hid: string; id: string; value: Host | null; onChange: (h: Host | null) => void; error?: string | null; showAll?: boolean }) {
   const [q, setQ] = useState('');
   const s = q.trim().toLowerCase(); const want = s.length >= 2 || (showAll && !s);
   // With real data, a visitor's phone asks the server, which only answers after two letters.
@@ -36,9 +41,36 @@ export function HostPicker({ hid, id, value, onChange, error, showAll = false }:
     <div className="input-wrap has-lead"><span className="lead"><Search size={17} /></span>
       <input id={id} className={'input' + (error ? ' bad' : '')} value={q} onChange={e => setQ(e.target.value)} placeholder="Type their name or room" autoComplete="off" aria-invalid={!!error || undefined} /></div>
     {list.length > 0 && <ul className="host-list" role="listbox" aria-label="Residents">{list.map(t => <li key={t.id}>
-      <button type="button" role="option" aria-selected={false} onClick={() => onChange({ name: t.name, room: t.room })}>
+      <button type="button" role="option" aria-selected={false} onClick={() => onChange({ name: t.name, room: t.room, id: t.id })}>
         <Avatar user={{ name: t.name }} size={32} /><span className="grow min0"><b className="ink clamp1">{t.name}</b></span><span className="room-tag">{t.room}</span></button></li>)}</ul>}
     {s.length >= 2 && !list.length && <span className="hint">Nobody matches "{q}". Check the spelling or ask the custodian.</span>}
+  </div>;
+}
+
+/**
+ * The gate version: the visitor types the room number and at least three letters of the person's first or last
+ * name, and only sees "Sarah A.". Nobody can list who lives in which room (finding F3).
+ */
+function GatePicker({ hid, id, value, onChange, error }: { hid: string; id: string; value: Host | null; onChange: (h: Host | null) => void; error?: string | null }) {
+  const [room, setRoom] = useState(''); const [q, setQ] = useState('');
+  const s = q.trim().toLowerCase(); const r = room.trim(); const want = s.length >= 3 && !!r;
+  const { data, error: fail } = useData(() => (want ? findResidents(hid, s, r) : Promise.resolve([])), [hid, s, r, want]);
+  const list = data ?? [];
+  if (value) return <div className={'host-chosen' + (error ? ' bad' : '')}>
+    <Avatar user={{ name: value.name }} size={38} />
+    <span className="grow min0"><b className="ink clamp1">{value.name}</b><span className="small muted">Room {value.room}</span></span>
+    <button type="button" className="btn btn-text btn-sm" onClick={() => { onChange(null); setQ(''); }}>Change</button></div>;
+  return <div className="host-pick stack-sm">
+    <div className="row" style={{ gap: 8 }}>
+      <input id={id} className={'input' + (error ? ' bad' : '')} style={{ width: 96, flex: 'none' }} value={room} onChange={e => setRoom(e.target.value)} placeholder="Room" aria-label="Their room number" autoComplete="off" aria-invalid={!!error || undefined} />
+      <input className={'input grow' + (error ? ' bad' : '')} value={q} onChange={e => setQ(e.target.value)} placeholder="First or last name" aria-label="Their first or last name" autoComplete="off" />
+    </div>
+    {list.length > 0 && <ul className="host-list" role="listbox" aria-label="Residents">{list.map(t => <li key={t.id}>
+      <button type="button" role="option" aria-selected={false} onClick={() => onChange({ name: t.name, room: t.room, id: t.id })}>
+        <Avatar user={{ name: t.name }} size={32} /><span className="grow min0"><b className="ink clamp1">{t.name}</b></span><span className="room-tag">{t.room}</span></button></li>)}</ul>}
+    {fail ? <span className="err" role="alert">{fail}</span>
+      : !want ? <span className="hint">Type their room number and at least 3 letters of their name.</span>
+      : !list.length ? <span className="hint">Nobody in room {r} matches "{q}". Check with the person you are visiting, or ask the custodian.</span> : null}
   </div>;
 }
 
@@ -83,7 +115,7 @@ export function VisitorScreen({ hid, onDone, remember }: { hid: string; onDone: 
   const nameErr = tried && f.name.trim().split(/\s+/).length < 2 ? 'Enter your first and last name.' : null;
   async function go(e: FormEvent) {
     e.preventDefault(); setTried(true); if (!ready) return; setBusy(true);
-    try { const v = await signInVisitor(hid, { name: f.name.trim(), room: f.host!.room, host: f.host!.name, phone: f.phone.trim() }, 'QR'); keep(v); setDone(v); }
+    try { const v = await signInVisitor(hid, { name: f.name.trim(), room: f.host!.room, host: f.host!.name, hostId: f.host!.id, phone: f.phone.trim() }, 'QR'); keep(v); setDone(v); }
     catch (x) { toast((x as Error).message); } finally { setBusy(false); }
   }
   return <div className="visitor-phone"><div className="screen">
@@ -94,7 +126,7 @@ export function VisitorScreen({ hid, onDone, remember }: { hid: string; onDone: 
     {done ? <div className="vp-body vp-done">
         <span className="vp-badge"><Check size={28} /></span><h3>You're signed in</h3>
         <div className="vp-pass">
-          <div className="row-sm"><Avatar user={{ name: done.host ?? '' }} size={40} /><div className="min0"><span className="tiny muted">Visiting</span><b className="ink clamp1">{done.host}</b></div></div>
+          <div className="row-sm"><Avatar user={{ name: shortName(done.host) }} size={40} /><div className="min0"><span className="tiny muted">Visiting</span><b className="ink clamp1">{shortName(done.host)}</b></div></div>
           <div className="vp-pass-grid"><div><span className="tiny muted">Room</span><b className="ink">{done.room}</b></div><div><span className="tiny muted">Time in</span><b className="ink">{t12(done.tin)}</b></div><div><span className="tiny muted">Visitor</span><b className="ink clamp1">{done.name.split(' ')[0]}</b></div></div>
         </div>
         <div className="banner primary small"><ShieldCheck size={15} className="ic" /><span><b>Leaving?</b> Show this screen to the custodian at the gate. They sign you out.</span></div>
@@ -102,7 +134,7 @@ export function VisitorScreen({ hid, onDone, remember }: { hid: string; onDone: 
       : <form className="vp-body" onSubmit={go} noValidate>
         {!open && <div className="banner warn small"><AlertTriangle size={15} className="ic" /><span>Visiting hours are over. You can still sign in, but the custodian may ask you to leave.</span></div>}
         <Field id="vq-name" label="Your full name" error={nameErr}><TextInput id="vq-name" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} error={nameErr} autoComplete="name" placeholder="First and last name" /></Field>
-        <Field id="vq-host" label="Who are you visiting?" error={tried && !f.host ? 'Choose the person you came to see.' : null}><HostPicker hid={hid} id="vq-host" value={f.host} onChange={host => setF({ ...f, host })} /></Field>
+        <Field id="vq-host" label="Who are you visiting?" error={tried && !f.host ? 'Choose the person you came to see.' : null}><HostPicker gate hid={hid} id="vq-host" value={f.host} onChange={host => setF({ ...f, host })} /></Field>
         <Field id="vq-phone" label="Your phone number" error={tried && !phoneOk ? 'Enter a 10-digit number, like 0772 123 456.' : null} hint="The custodian may call if they need to reach you.">
           <TextInput id="vq-phone" type="tel" inputMode="tel" autoComplete="tel" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} error={tried && !phoneOk ? 'x' : null} placeholder="0772 123 456" /></Field>
         <label className={'check small vp-agree' + (tried && !f.ok ? ' bad' : '')}><input type="checkbox" checked={f.ok} onChange={e => setF({ ...f, ok: e.target.checked })} />
@@ -130,7 +162,7 @@ function printPoster(hostel: string, visit: string, url: string) {
   h1 { font-size: 34pt; line-height: 1.1; margin-top: 4mm } .lead { font-size: 18pt; color: #4F5BEA; font-weight: 700 }
   .qr { width: 110mm; padding: 6mm; border: 1.2mm solid #111321; border-radius: 6mm; margin: 4mm 0 } .qr svg { display: block; width: 100%; height: auto }
   ol { list-style: none; padding: 0; display: flex; gap: 6mm; font-size: 12pt; text-align: left }
-  li { display: flex; align-items: center; gap: 2.5mm; max-width: 52mm }
+  li { display: flex; align-items: center; gap: 4.5mm; max-width: 52mm }
   li b { flex: none; width: 8mm; height: 8mm; border-radius: 50%; background: #4F5BEA; color: #fff; display: grid; place-items: center; font-size: 11pt }
   .hours { font-size: 14pt; font-weight: 700; margin-top: 4mm } .foot { font-size: 11pt; color: #555A6E; max-width: 150mm }
   </style></head><body><div class="p">

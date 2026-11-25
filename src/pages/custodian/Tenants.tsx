@@ -9,7 +9,7 @@ import { SearchIcon } from '../../components/SearchIcon';
 import { Segmented } from '../../components/Segmented';
 import { EmptyState, ErrorState } from '../../components/States';
 import { useToast } from '../../components/Toast';
-import { Avatar, Btn, Skeleton } from '../../components/ui';
+import { Avatar, Btn, Skeleton, ActionButton } from '../../components/ui';
 import type { Tenant } from '../../data/types';
 import { copyText, ugx } from '../../lib/format';
 import { useIsPhone } from '../../lib/useIsPhone';
@@ -98,7 +98,7 @@ function TenantCard({ t, owes, busy, onIn, onOut }: { t: Tenant; owes: number; b
       {t.status === 'due' && (t.roomId ? (owes ? <button className="vm-btn primary" onClick={onIn} aria-label={`Collect ${first}'s balance of ${ugx(owes)}`} title="Collect the balance"><Banknote size={17} /></button>
           : <button className="vm-btn primary" onClick={onIn} disabled={busy} aria-label={`Check ${first} in`} title="Check in"><LogIn size={17} /></button>)
         : <button className="vm-btn primary" onClick={onIn} aria-label={`Give ${first} a room`} title="Give a room"><KeyRound size={17} /></button>)}
-      {t.status === 'in' && <button className="vm-btn" onClick={onOut} aria-label={`Check ${first} out`} title="Check out"><LogOut size={17} /></button>}
+      {t.status === 'in' && <ActionButton className="vm-btn" onClick={onOut} aria-label={`Check ${first} out`} title="Check out"><LogOut size={17} /></ActionButton>}
     </div>
   </div>;
 }

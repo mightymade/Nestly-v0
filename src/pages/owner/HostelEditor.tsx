@@ -160,7 +160,7 @@ function Basics({ h }: Ctx) {
       <textarea id="b-about" className={'input' + (err.about ? ' bad' : '')} rows={3} maxLength={300} value={f.about} onChange={set('about')} placeholder="How far is it from campus on foot? What makes it a good place to stay?" />
       <div className="row between">{err.about ? <span className="err">{err.about}</span> : <span className="hint">Plain words. Students read this on their phones.</span>}<span className="hint num">{f.about.length}/300</span></div></div>
     <div className="field"><span className="label">Visiting hours</span>
-      <div className="row" style={{ gap: 10 }}><input type="time" className="input" value={f.from} onChange={set('from')} aria-label="Visitors from" /><span className="muted">to</span>
+      <div className="row" style={{ gap: 8 }}><input type="time" className="input" value={f.from} onChange={set('from')} aria-label="Visitors from" /><span className="muted">to</span>
         <input type="time" className={'input' + (err.to ? ' bad' : '')} value={f.to} onChange={set('to')} aria-label="Visitors until" /></div>
       {err.to && <span className="err">{err.to}</span>}</div>
     {dialog}

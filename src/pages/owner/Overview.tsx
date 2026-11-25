@@ -37,7 +37,7 @@ function StatusPage() {
       <p className="muted">{rejected ? 'Fix the item below and send it again. We check again within 1 to 2 working days.' : 'This usually takes 1 to 2 working days. We will send you a notification when it is done.'}</p>
       {rejected && me.ownerNote && <div className="banner warn"><AlertTriangle size={16} className="ic" /><span><b>Reason:</b> {me.ownerNote}</span></div>}
       <ul className="ow-check">{items.map(([l, ok]) => <li key={l}>{ok ? <CheckCircle2 size={18} className="ok" /> : <XCircle size={18} className="no" />}{l}</li>)}</ul>
-      <div className="row wrap" style={{ gap: 10 }}>
+      <div className="row wrap" style={{ gap: 8 }}>
         {rejected ? <Link to="/owner/signup?fix=1" className="btn btn-primary">Fix and resubmit</Link>
           : hasHostel ? <Link to="/o/hostels" className="btn btn-primary">See your hostels</Link> : <Btn onClick={add}><Plus size={17} />Add your hostel</Btn>}
         {(rejected || !hasHostel) ? (hasHostel && <Link to="/o/hostels" className="btn btn-secondary">See your hostels</Link>) : <Btn kind="secondary" onClick={add}><Plus size={17} />Add another hostel</Btn>}

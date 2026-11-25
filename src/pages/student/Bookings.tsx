@@ -44,7 +44,7 @@ export function Bookings() {
   const card = (b: B) => <article key={b.id} className="card card-pad stack">
     <div className="row start">
       <Link to={`/s/explore/${b.hostelId}`} style={{ width: 72, height: 72, borderRadius: 14, overflow: 'hidden', flex: 'none' }} aria-label={b.hostel.name}><Art hostel={b.hostel} /></Link>
-      <div className="grow stack-sm" style={{ gap: 2 }}>
+      <div className="grow stack-sm" style={{ gap: 4 }}>
         <div className="row between start"><h3 className="clamp1">{b.hostel.name}</h3><Pill tone={LABEL[b.status][1]}>{LABEL[b.status][0]}</Pill></div>
         <span className="small">{b.room}{b.roomNo ? ` · Room ${b.roomNo}` : ''}</span><span className="small muted">{b.sem}</span></div></div>
     {b.status === 'cancelled' ? <div className="banner primary small">{b.hostel.name} sends your {ugx(b.fee)} back to your mobile money. If it has not arrived in 3 days, report it on the hostel page.</div> : <Tracker status={b.status} />}
@@ -111,7 +111,7 @@ function RateSheet({ b, onClose }: { b: B; onClose: () => void }) {
   return <Overlay title="Rate your stay" onClose={onClose} width={460}
     footer={<Btn block disabled={!n} loading={busy} onClick={async () => { setBusy(true); await rateBooking(b.id, n, text.trim(), `${first} ${last?.[0] ?? ''}.`); toast('Rating posted. Thank you.'); onClose(); }}>Post rating</Btn>}>
     <div className="stack"><p className="muted" style={{ textAlign: 'center' }}>{b.hostel.name} · {b.sem}</p>
-      <div className="row" style={{ justifyContent: 'center', gap: 6 }} role="radiogroup" aria-label="Stars">{[1, 2, 3, 4, 5].map(i => <button key={i} role="radio" aria-checked={n === i} onClick={() => setN(i)} aria-label={`${i} stars`} className="icon-btn" style={{ width: 48, height: 48 }}>
+      <div className="row" style={{ justifyContent: 'center', gap: 8 }} role="radiogroup" aria-label="Stars">{[1, 2, 3, 4, 5].map(i => <button key={i} role="radio" aria-checked={n === i} onClick={() => setN(i)} aria-label={`${i} stars`} className="icon-btn" style={{ width: 48, height: 48 }}>
         <Star size={34} style={{ color: i <= n ? 'var(--star)' : 'var(--bar-muted)', fill: i <= n ? 'var(--star)' : 'transparent' }} /></button>)}</div>
       <p style={{ textAlign: 'center' }} className="strong">{words[n]}</p>
       <div className="field"><label htmlFor="rate-text">What should other students know?</label><textarea id="rate-text" className="input" value={text} onChange={e => setText(e.target.value)} placeholder="Water, security, noise, how fast things get fixed" /></div>

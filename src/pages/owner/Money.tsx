@@ -90,7 +90,7 @@ function View({ ownerId, phone0 }: { ownerId: string; phone0: string }) {
       text={q || range.key !== 'all' ? 'Try another date range or search.' : 'When a student books, the fee goes straight to your account and shows here.'} />
     : phone ? <div className="vgrid">{fees.map(f => <button key={f.id} className="vcard vcard-m" onClick={() => setOpen(f)} style={{ textAlign: 'left' }}>
         <Avatar user={{ name: f.student }} size={40} />
-        <div className="vm-info"><div className="vm-line1" style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}><b className="ink clamp1">{f.student}</b><b className="num ink nowrap">{ugx(f.fee)}</b></div>
+        <div className="vm-info"><div className="vm-line1" style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><b className="ink clamp1">{f.student}</b><b className="num ink nowrap">{ugx(f.fee)}</b></div>
           <div className="vm-line2"><span className="clamp1">{f.room}</span></div>
           <div className="vm-line3"><span>{shortDate(f.at!)}</span><span className="clamp1">· {f.hostel}</span></div></div>
         <ChevronRight size={18} className="muted" /></button>)}</div>
@@ -109,7 +109,7 @@ function View({ ownerId, phone0 }: { ownerId: string; phone0: string }) {
       ['Paid until', s.neverPaid ? 'Not paid yet' : dayDate(s.paidUntil)], off ? ['Next due', 'When your first hostel goes live'] : s.overdue ? ['You owe', `${ugx(s.owed)}${s.paused ? `. ${s.paused} paused ${s.paused === 1 ? 'hostel comes' : 'hostels come'} back as soon as you pay` : ''}`] : ['Next due', dayDate(s.due)],
       ['Students pay into', d.account ? maskTo(d.account.method, d.account.to) : 'No account yet']] as [string, string][]).map(([k, v]) =>
       <div key={k} className="review-row"><div className="min0"><span className="tiny muted">{k}</span><b className="small ink">{v}</b></div></div>)}</div>
-    <p className="tiny muted" style={{ marginTop: 10 }}>Nestly makes money only from this subscription. There is no commission on bookings.</p>
+    <p className="tiny muted" style={{ marginTop: 8 }}>Nestly makes money only from this subscription. There is no commission on bookings.</p>
   </Overlay>;
   const overlays = <>{detail}{subSheet}{pay && <PaySub fee={s.fee} months={s.overdue ? Math.max(1, Math.round(s.owed / s.fee)) : 1} phone0={phone0} ownerId={ownerId} onClose={() => setPay(false)} />}
     {receipts && <Overlay title="Subscription receipts" onClose={() => setReceipts(false)} width={460}>

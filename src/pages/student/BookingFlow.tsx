@@ -41,10 +41,12 @@ export function BookingFlow({ h, room, onRoom, onClose }: { h: Hostel; room: num
   const [booking, setBooking] = useState<Booking | null>(null);
   const r = h.rooms[room]!;
 
-  if (!me.emailVerified) return <Overlay title="Confirm your student email" onClose={onClose} width={440}><div className="center">
+  if (!me.emailVerified) return <Overlay title={me.verifyVia === 'id' ? (me.idStatus === 'pending' ? 'Your student ID is being checked' : 'Add your student ID') : 'Confirm your student email'} onClose={onClose} width={440}><div className="center">
     <span className="icon-tile primary" style={{ width: 60, height: 60, borderRadius: 18 }}><GraduationCap size={26} /></span>
-    <p>Only current students can book on Nestly. Open the link we sent to <b>{me.email}</b>. It takes about a minute.</p>
-    <Btn block onClick={() => nav('/signup')}>Confirm my email</Btn></div></Overlay>;
+    {me.verifyVia === 'id'
+      ? <p>Only current students can book on Nestly. {me.idStatus === 'rejected' ? <>We could not accept your student ID: <b>{me.idNote}</b>{/[.!?]$/.test(me.idNote ?? '') ? '' : '.'} Send new photos to book.</> : me.idStatus === 'needs_photo' ? 'Add a photo of your student ID and a selfie holding it. Our team checks them, usually within a day.' : 'Our team checks student IDs within a day. We will tell you as soon as it is approved.'}</p>
+      : <p>Only current students can book on Nestly. Open the link we sent to <b>{me.email}</b>. It takes about a minute.</p>}
+    <Btn block onClick={() => nav('/signup')}>{me.verifyVia === 'id' ? (me.idStatus === 'rejected' ? 'Send new photos' : me.idStatus === 'needs_photo' ? 'Add photos' : 'See status') : 'Confirm my email'}</Btn></div></Overlay>;
   if (step !== 'done' && hasBookingFor(me.id, SEM)) return <Overlay title="You already have a booking" onClose={onClose} width={440}><div className="center">
     <span className="icon-tile warn" style={{ width: 60, height: 60, borderRadius: 18 }}><CalendarCheck size={26} /></span>
     <p>You already booked a room for {SEM}. You can hold one booking per semester. Cancel it first if you want to switch.</p>

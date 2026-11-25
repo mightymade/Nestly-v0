@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/PageHeader';
 import { ErrorState } from '../../components/States';
 import { useToast } from '../../components/Toast';
-import { Avatar, Btn, Skeleton } from '../../components/ui';
+import { Avatar, Btn, Skeleton, ActionButton } from '../../components/ui';
 import type { Tenant, Visitor } from '../../data/types';
 import { useIsPhone } from '../../lib/useIsPhone';
 import { closingMin, LONG_VISIT, nowMin, span, t12, toMin, useMinuteTick } from '../../lib/visitTime';
@@ -87,7 +87,7 @@ export function Today() {
     {d.inside.length ? <ul className="td-list">{d.inside.slice(0, phone ? 3 : 6).map(v => { const l = isLate(v);
       return <li key={v.id} className="td-row"><Avatar user={{ name: v.name }} size={36} /><span className="grow min0"><b className="ink clamp1">{v.name}</b>
         <span className="td-s">Room {v.room} · <span className={l ? 'danger-t strong' : ''}>{l ? `${span(mins(v))}, past hours` : `since ${t12(v.tin)}`}</span></span></span>
-        <button className="icon-btn td-out" onClick={() => out(v)} aria-label={`Mark ${v.name} as left`} title="Mark as left"><LogOut size={17} /></button></li>; })}</ul>
+        <ActionButton className="icon-btn td-out" onClick={() => out(v)} aria-label={`Mark ${v.name} as left`} title="Mark as left"><LogOut size={17} /></ActionButton></li>; })}</ul>
       : <p className="td-empty"><DoorOpen size={16} />Nobody is visiting. {d.visitsToday ? `${d.visitsToday} ${d.visitsToday === 1 ? 'visit' : 'visits'} so far today.` : ''}</p>}
     {d.inside.length > (phone ? 3 : 6) && <Link to="/c/visitors" className="td-more">See all {d.inside.length}<ChevronRight size={15} /></Link>}
   </section>;

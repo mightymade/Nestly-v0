@@ -1,0 +1,62 @@
+/* ---------- Phone sign-in pages (log in, sign up, invite, owner sign up, reset password) ----------
+   One layout for all of them:
+   1. A photo band with the back button and logo. It grows to fill spare height on short forms, up to a cap,
+      and shrinks to a slim strip on long forms, so the screen never has a large empty area.
+   2. A white sheet that overlaps the band, with the heading, the form, and the help links pinned to the bottom. */
+.ma { min-height: 100dvh; display: flex; flex-direction: column; background: var(--surface) }
+.ma-band {
+  position: relative; isolation: isolate; overflow: hidden; background: #1b1f4a; color: #fff;
+  flex: 100 0 auto; min-height: calc(124px + env(safe-area-inset-top, 0px)); max-height: max(150px, 28dvh);
+  padding: calc(12px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px))
+}
+.ma-band .auth-photo { object-position: 50% 38% }
+.ma-shade { position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, rgba(12, 16, 44, .78) 0, rgba(12, 16, 44, .35) 84px, rgba(12, 16, 44, .12) 60%, rgba(12, 16, 44, .45) 100%) }
+.ma-bar { position: relative; display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; height: 44px }
+.ma-gap { width: 40px }
+.ma-logo { justify-self: center; border-radius: 12px}
+.ma-logo .logo { color: #fff; font-size: 20px; text-shadow: 0 1px 8px rgba(0, 0, 0, .35) }
+.ma-logo .logo-mark { color: #4F5BEA; width: 32px; height: 32px }
+.ma-logo:focus-visible { outline: 2px solid #fff; outline-offset: 3px }
+.ma .auth-back.on-photo { width: 40px; height: 40px }
+
+.ma-sheet {
+  position: relative; z-index: 1; flex: 1 0 auto; display: flex; flex-direction: column;
+  margin-top: -24px; border-radius: 12px 12px 0 0; background: var(--surface); box-shadow: 0 -10px 28px rgba(12, 16, 44, .14);
+  padding: 24px max(20px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px))
+}
+.ma-in { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 480px; margin: 0 auto }
+.ma-title h1 { font-size: 24px; line-height: 32px; font-weight: 800; letter-spacing: -.02em; color: var(--ink); text-wrap: balance }
+.ma-title p { margin-top: 8px; font-size: 14px; line-height: 20px; color: var(--muted); text-wrap: pretty }
+.ma-end { margin-top: auto; padding-top: 24px; width: 100%; max-width: 480px; margin-left: auto; margin-right: auto }
+.ma .sticky-foot { margin-top: auto }
+
+/* Form sizes: comfortable to tap, tight enough that short forms fit without scrolling */
+.ma .stack { gap: 16px }
+.ma .field { gap: 8px } .ma .field > label { font-size: 14px}
+.ma .input { height: 48px } .ma .btn { min-height: 48px } .ma .btn-sm { min-height: 40px; height: 40px }
+.ma .hint, .ma .err { font-size: 12px; line-height: 20px}
+.ma .doc-drop { min-height: 76px; padding: 12px; flex-direction: row; gap: 8px }
+.ma .f2 { grid-template-columns: 1fr; gap: 16px }
+.ma .login-alt { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 8px; margin: 0; padding: 16px 16px; border-radius: 12px; background: var(--surface-2); text-align: center; font-size: 14px}
+.ma .login-alt a { font-weight: 700 }
+.ma .auth-foot { flex-wrap: wrap }
+
+/* A small helper card under short forms (invite code) */
+.ma-help { display: flex; gap: 12px; align-items: flex-start; padding: 16px; border-radius: 12px; background: var(--surface-2); font-size: 14px; line-height: 20px; color: var(--muted) }
+.ma-help b { color: var(--ink); display: block; margin-bottom: 4px; font-size: 14px}
+.ma-help .icon-tile { flex: none }
+
+/* Short phones: slimmer band and spacing so log in fits on one screen */
+@media (max-height: 700px) {
+  .ma-band { min-height: calc(96px + env(safe-area-inset-top, 0px)); max-height: max(110px, 22dvh) }
+  .ma-sheet { padding-top: 20px }
+  .ma-in { gap: 16px } .ma .stack { gap: 12px }
+  .ma-title h1 { font-size: 24px; line-height: 32px} .ma-title p { font-size: 14px; line-height: 20px; margin-top: 4px }
+  .ma .input { height: 48px } .ma .btn { min-height: 48px }
+  .ma-end { padding-top: 16px }
+}
+@media (max-width: 360px) { .ma-sheet { padding-left: 16px; padding-right: 16px } }
+.ma .login-alt { flex-direction: column; gap: 4px }
+.la-links { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 8px }
+@media (min-width: 900px) { .la-q { margin-right: 4px } .login-alt { flex-direction: row } }

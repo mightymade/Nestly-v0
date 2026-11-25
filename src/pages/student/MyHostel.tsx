@@ -23,7 +23,7 @@ export function MyHostel() {
 
   const visit = h.visit.replace(/:00/g, ''); const pt = hostelPoint(h);
   const hero = <div className="hero-card my-hero">
-    <div className="row between start" style={{ gap: 10 }}><h2 className="my-hero-name">{h.name}</h2><Pill tone="onhero">Checked in</Pill></div>
+    <div className="row between start" style={{ gap: 8 }}><h2 className="my-hero-name">{h.name}</h2><Pill tone="onhero">Checked in</Pill></div>
     <div className="meta">
       <span><DoorOpen size={15} />Room {b.roomNo}</span>
       <span><Clock size={15} />Visitors {visit}</span>

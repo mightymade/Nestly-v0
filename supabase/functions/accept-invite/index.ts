@@ -26,6 +26,9 @@ export async function handle(req: Request, env: { url: string; serviceKey: strin
   if (password.length < 8 || !/[a-z]/i.test(password) || !/\d/.test(password)) return reply({ error: 'Use 8+ characters with letters and numbers.', field: 'password' }, 400);
 
   const admin = createClient(env.url, env.serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  // At most 10 tries an hour from one network address, so nobody can guess invite codes.
+  const ip = (req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? '').split(',')[0]!.trim().slice(0, 64);
+  if (ip) { const { data: ok } = await admin.rpc('rate_ok', { p_key: 'invite-ip:' + ip, p_max: 10, p_seconds: 3600 }); if (ok === false) return reply({ error: 'Too many tries from this network. Try again in an hour.' }, 429); }
   const { data: inv } = await admin.from('invites').select('*').ilike('code', code).maybeSingle();
   if (!inv) return reply({ error: 'That invite code is not valid.', field: 'code' }, 400);
   if (inv.used) return reply({ error: 'This invite has already been used.', field: 'code' }, 400);

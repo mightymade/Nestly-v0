@@ -10,7 +10,7 @@ import { storage } from '../lib/storage';
 import { load, push, rebase, resetRemote } from './remote';
 import { live } from './supabase';
 
-const KEY = 'nestly.db.v15';
+const KEY = 'nestly.db.v17';
 /** An empty database, the starting point before live data loads. */
 export const emptyDb = (): DB => ({
   users: [], bookings: [], saved: {}, reviews: [], visitors: [], tenants: [], rooms: [], notices: [], invites: [], mail: [],

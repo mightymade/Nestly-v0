@@ -13,33 +13,37 @@ import { AMENITIES } from '../../data/catalog';
 import type { VerificationDoc } from '../../data/types';
 import { timeAgo, ugx, ymd } from '../../lib/format';
 import { useIsPhone } from '../../lib/useIsPhone';
-import { ApiError, approveListing, approveOwner, bookingSem, hostelSems, listReviewQueue, minPrice, rejectOwner, requestChanges, semDates, semName, uniSems, universityById } from '../../services/api';
+import { ApiError, approveListing, approveOwner, approveStudentId, rejectStudentId, approvePayoutChange, rejectPayoutChange, bookingSem, hostelSems, listReviewQueue, minPrice, rejectOwner, requestChanges, semDates, semName, uniSems, universityById } from '../../services/api';
 import { useData } from '../../services/useData';
+import { freshDocLink } from '../../services/remote';
+import { live } from '../../services/supabase';
 import { maskTo } from '../owner/shared';
 
 type Q = Awaited<ReturnType<typeof listReviewQueue>>;
-type OwnerItem = Q['owners'][number]; type ListingItem = Q['listings'][number];
-const DOC_NAME: Record<VerificationDoc['kind'], string> = { national_id: 'National ID', selfie: 'Selfie', ownership: 'Proof of ownership', trading_licence: 'Trading licence' };
+type OwnerItem = Q['owners'][number]; type ListingItem = Q['listings'][number]; type StudentItem = Q['students'][number];
+const DOC_NAME: Record<VerificationDoc['kind'], string> = { national_id: 'National ID', selfie: 'Selfie', ownership: 'Proof of ownership', trading_licence: 'Trading licence', student_id: 'Student ID', student_selfie: 'Selfie with ID' };
 export const waited = (iso: string) => { const m = Math.max(1, Math.round((Date.now() - +new Date(iso)) / 60000)); return m < 60 ? `${m} min` : m < 1440 ? `${Math.round(m / 60)} h` : `${Math.round(m / 1440)} ${Math.round(m / 1440) === 1 ? 'day' : 'days'}`; };
 
 export function AdminReviews() {
   const phone = useIsPhone(); const [params, setParams] = useSearchParams();
   const { data, loading, error, reload } = useData(() => listReviewQueue(), []);
-  const tab = (params.get('tab') as 'owners' | 'listings') ?? 'owners';
+  const tab = (params.get('tab') as 'owners' | 'listings' | 'students' | 'payouts') ?? 'owners';
   const [sel, setSel] = useState<string | null>(null);
   const setTab = (t: string) => { setSel(null); setParams({ tab: t }, { replace: true }); };
-  const owners = data?.owners ?? [], listings = data?.listings ?? [];
+  const owners = data?.owners ?? [], listings = data?.listings ?? [], students = data?.students ?? [], payouts = data?.payouts ?? [];
   const items = tab === 'owners' ? owners.map(o => ({ id: o.user.id, title: o.user.name, sub: `${o.user.phone ?? ''} · ${o.hostels.length} ${o.hostels.length === 1 ? 'hostel' : 'hostels'} drafted`, since: o.since, avatar: o.user.name }))
+    : tab === 'payouts' ? payouts.map(x => ({ id: x.user.id, title: x.user.name, sub: `New account in the name ${x.next.name}`, since: x.since, avatar: x.user.name }))
+    : tab === 'students' ? students.map(x => ({ id: x.user.id, title: x.user.name, sub: `${x.uni?.short ?? ''} · ${x.user.studentNo ?? ''}`, since: x.since, avatar: x.user.name }))
     : listings.map(l => ({ id: l.hostel.id, title: l.hostel.name, sub: `${l.owner?.name ?? ''} · ${universityById(l.hostel.uni)?.short}`, since: l.since, avatar: l.hostel.name }));
   const current = sel ?? (phone ? null : items[0]?.id ?? null);
-  const o = owners.find(x => x.user.id === current); const l = listings.find(x => x.hostel.id === current);
-  const tabs = <Segmented label="Review type" value={tab} onChange={setTab} options={[{ value: 'owners', label: 'Owners', count: owners.length }, { value: 'listings', label: 'Listings', count: listings.length }]} />;
+  const o = tab === 'owners' ? owners.find(x => x.user.id === current) : undefined; const l = tab === 'listings' ? listings.find(x => x.hostel.id === current) : undefined; const st = tab === 'students' ? students.find(x => x.user.id === current) : undefined; const po = tab === 'payouts' ? payouts.find(x => x.user.id === current) : undefined;
+  const tabs = <Segmented label="Review type" value={tab} onChange={setTab} options={[{ value: 'owners', label: 'Owners', count: owners.length }, { value: 'listings', label: 'Listings', count: listings.length }, { value: 'students', label: 'Students', count: students.length }, ...(payouts.length || tab === 'payouts' ? [{ value: 'payouts', label: 'Payouts', count: payouts.length }] : [])]} />;
   const queue = error ? <ErrorState message={error} onRetry={reload} /> : loading && !data ? <Skeleton rows={3} h={64} />
-    : !items.length ? <EmptyState bare icon={<ClipboardCheck size={24} />} title="Nothing to review" text={tab === 'owners' ? 'New owners show up here when they send their ID.' : 'Listings show up here when an owner submits them.'} />
+    : !items.length ? <EmptyState bare icon={<ClipboardCheck size={24} />} title="Nothing to review" text={tab === 'owners' ? 'New owners show up here when they send their ID.' : tab === 'students' ? 'Students who sign up with a student ID show up here.' : tab === 'payouts' ? 'Payout changes to an account in another name show up here.' : 'Listings show up here when an owner submits them.'} />
     : <div className="rv-q">{items.map(i => <button key={i.id} className={'rv-item' + (current === i.id ? ' on' : '')} onClick={() => setSel(i.id)}>
         <Avatar user={{ name: i.avatar }} size={38} /><span className="min0 grow"><b className="ink clamp1">{i.title}</b><span className="tiny muted clamp1">{i.sub}</span></span>
         <span className="tiny warn-t strong nowrap">{waited(i.since)}</span></button>)}</div>;
-  const review = o ? <OwnerReview key={o.user.id} o={o} onDone={() => setSel(null)} /> : l ? <ListingReview key={l.hostel.id} l={l} onDone={() => setSel(null)} /> : null;
+  const review = o ? <OwnerReview key={o.user.id} o={o} onDone={() => setSel(null)} /> : l ? <ListingReview key={l.hostel.id} l={l} onDone={() => setSel(null)} /> : st ? <StudentReview key={st.user.id} s={st} onDone={() => { setSel(null); reload(); }} /> : po ? <PayoutReview key={po.user.id} p={po} onDone={() => { setSel(null); reload(); }} /> : null;
 
   if (phone) {
     if (review) return <><button className="rv-back" onClick={() => setSel(null)}><ChevronLeft size={18} />Back to the queue</button>{review}</>;
@@ -55,11 +59,17 @@ export function AdminReviews() {
 }
 
 function DocView({ d }: { d: VerificationDoc }) {
-  const [zoom, setZoom] = useState(false);
+  const [zoom, setZoom] = useState<string | null>(null);
+  // Links to private documents last 15 minutes, so opening one asks for a new link first.
+  async function open() {
+    const l = live ? await freshDocLink(d) : (d.url || d.link);
+    if (!l) return;
+    if (d.url) setZoom(l); else { const w = window.open(l, '_blank', 'noopener'); if (!w) window.location.href = l; }
+  }
   return <figure className="rv-doc">
-    <button onClick={() => (d.url ? setZoom(true) : d.link && window.open(d.link, '_blank', 'noopener'))} aria-label={`Open ${DOC_NAME[d.kind]} larger`} disabled={!d.url && !d.link}>{d.url ? <><img src={d.url} alt={DOC_NAME[d.kind]} /><span className="zoom"><ZoomIn size={15} /></span></> : <span className="pdf"><FileText size={28} />{d.link ? 'Open PDF' : 'PDF file'}</span>}</button>
+    <button onClick={open} aria-label={`Open ${DOC_NAME[d.kind]} larger`} disabled={!d.url && !d.link}>{d.url ? <><img src={d.url} alt={DOC_NAME[d.kind]} /><span className="zoom"><ZoomIn size={15} /></span></> : <span className="pdf"><FileText size={28} />{d.link ? 'Open PDF' : 'PDF file'}</span>}</button>
     <figcaption><b className="small ink">{DOC_NAME[d.kind]}</b><span className="tiny muted clamp1">{d.fileName}</span></figcaption>
-    {zoom && <Overlay title={DOC_NAME[d.kind]} onClose={() => setZoom(false)} width={820}><img src={d.url} alt={DOC_NAME[d.kind]} style={{ width: '100%', borderRadius: 12 }} /></Overlay>}
+    {zoom && <Overlay title={DOC_NAME[d.kind]} onClose={() => setZoom(null)} width={820}><img src={zoom} alt={DOC_NAME[d.kind]} style={{ width: '100%', borderRadius: 12 }} /></Overlay>}
   </figure>;
 }
 
@@ -97,6 +107,64 @@ function OwnerReview({ o, onDone }: { o: OwnerItem; onDone: () => void }) {
     {rej && <ReasonDialog title={`Reject ${u.name.split(' ')[0]}?`} intro="The owner sees this reason and can fix it and send again." quick={REASONS} cta="Reject"
       onClose={() => setRej(false)} onSend={async r => { await rejectOwner(u.id, r); toast(`${u.name} was told what to fix`); onDone(); }} />}
   </div>;
+}
+
+type PayoutItem = Q['payouts'][number];
+const payText = (p?: { method: string; to: string; name: string; bank?: string }) => p ? `${p.method === 'bank' ? `${p.bank || 'Bank'} account` : p.method === 'mtn' ? 'MTN Mobile Money' : 'Airtel Money'} ${maskTo(p.method as 'mtn', p.to)}, ${p.name}` : 'None';
+function PayoutReview({ p, onDone }: { p: PayoutItem; onDone: () => void }) {
+  const toast = useToast(); const [rej, setRej] = useState(false); const [busy, setBusy] = useState(false); const u = p.user;
+  const approve = async () => { setBusy(true); try { await approvePayoutChange(u.id); toast(`Approved. It starts 24 hours after ${u.name.split(' ')[0]} asked.`); onDone(); } catch (x) { toast((x as Error).message); } finally { setBusy(false); } };
+  return <div className="rv-body">
+    <div className="row between start wrap" style={{ gap: 12 }}><div className="row-sm"><Avatar user={u} size={48} /><div><h2 style={{ fontSize: 20 }}>{u.name}</h2><p className="small muted">{u.email} · {u.phone}</p></div></div>
+      <div className="row rv-acts" style={{ gap: 8 }}><Btn kind="secondary" onClick={() => setRej(true)}><X size={16} />Reject</Btn><Btn loading={busy} onClick={approve}><Check size={16} />Approve</Btn></div></div>
+    <Checks items={[{ ok: false, text: `The new account is in the name "${p.next.name}", not "${u.name}"` }, { ok: true, text: 'The owner entered their password to ask for it, and was emailed a link to cancel it' }]} />
+    <div className="rv-facts">
+      <div><span className="tiny muted">Now</span><b className="small ink">{payText(p.was)}</b></div>
+      <div><span className="tiny muted">Asked for</span><b className="small ink">{payText(p.next)}</b></div>
+      <div><span className="tiny muted">Asked</span><b className="small ink">{timeAgo(p.since)}</b></div>
+    </div>
+    <p className="tiny muted row-sm"><ShieldCheck size={13} />Call the owner on the phone number from their approved profile, not one from a message, and check they asked for this. A stolen account is the usual reason for a payout in someone else's name.</p>
+    {rej && <ReasonDialog title={`Reject ${u.name.split(' ')[0]}'s payout change?`} intro="The owner sees this reason. Their current account stays." quick={['The owner did not ask for this change', 'The account must be in the owner’s own name', 'We could not reach the owner to check']} cta="Reject"
+      onClose={() => setRej(false)} onSend={async r => { await rejectPayoutChange(u.id, r); toast('Rejected. The old account stays.'); onDone(); }} />}
+  </div>;
+}
+
+const ID_REASONS = ['ID photo is blurry', 'Selfie does not match the photo on the ID', 'Name does not match the ID', 'Student number does not match the ID', 'ID has expired', 'Not a student ID of this university'];
+function StudentReview({ s, onDone }: { s: StudentItem; onDone: () => void }) {
+  const toast = useToast(); const [rej, setRej] = useState(false); const [ok, setOk] = useState(false);
+  const u = s.user; const approvedElsewhere = s.others.filter(o => o.idStatus === 'approved'); const pendingElsewhere = s.others.filter(o => o.idStatus === 'pending');
+  return <div className="rv-body">
+    <div className="row between start wrap" style={{ gap: 12 }}><div className="row-sm"><Avatar user={u} size={48} /><div><h2 style={{ fontSize: 20 }}>{u.name}</h2><p className="small muted">{u.email} · email confirmed</p></div></div>
+      <div className="row rv-acts" style={{ gap: 8 }}><Btn kind="secondary" onClick={() => setRej(true)}><X size={16} />Reject</Btn><Btn disabled={!s.doc || !s.selfie || !!approvedElsewhere.length} onClick={() => setOk(true)}><Check size={16} />Approve</Btn></div></div>
+    <Checks items={[
+      { ok: !!s.doc && !!s.selfie, text: s.doc && s.selfie ? 'Student ID and selfie uploaded' : 'A photo is missing' },
+      { ok: !approvedElsewhere.length, text: approvedElsewhere.length ? `Student number ${u.studentNo} is already verified for ${approvedElsewhere[0]!.name}` : `Student number ${u.studentNo ?? ''} is not verified on any other account` },
+      ...(pendingElsewhere.length ? [{ ok: false, text: `${pendingElsewhere.length === 1 ? 'Another account also claims' : `${pendingElsewhere.length} other accounts also claim`} this number: ${pendingElsewhere.map(o => `${o.name} (${o.email})`).join(', ')}. Approve at most one.` }] : []),
+      { ok: !!s.uni, text: s.uni ? `Says they study at ${s.uni.name}` : 'No university chosen' },
+    ]} />
+    <div className="rv-facts">
+      <div><span className="tiny muted">Student number</span><b className="small ink">{u.studentNo}</b></div>
+      <div><span className="tiny muted">University</span><b className="small ink">{s.uni?.short}</b></div>
+      <div><span className="tiny muted">Sent</span><b className="small ink">{timeAgo(s.since)}</b></div>
+    </div>
+    <h3 className="rv-h">Student ID and selfie</h3>
+    <div className="rv-docs">{s.doc ? <DocView d={s.doc} /> : <p className="muted small">No ID photo.</p>}{s.selfie ? <DocView d={s.selfie} /> : <p className="muted small">No selfie.</p>}</div>
+    <p className="tiny muted row-sm"><ShieldCheck size={13} />Check that the face in the selfie matches the photo on the card, and that the name, number, university and expiry date match. Both photos are deleted as soon as you decide.</p>
+    {ok && <ApproveIdDialog name={u.name} onClose={() => setOk(false)} onApprove={async until => { await approveStudentId(u.id, until); toast(`${u.name} can now book. Both photos were deleted.`); onDone(); }} />}
+    {rej && <ReasonDialog title={`Reject ${u.name.split(' ')[0]}'s ID?`} intro="The student sees this reason and can send new photos." quick={ID_REASONS} cta="Reject"
+      onClose={() => setRej(false)} onSend={async r => { await rejectStudentId(u.id, r); toast(`${u.name} was told what to fix`); onDone(); }} />}
+  </div>;
+}
+/** Asks for the expiry date printed on the card before approving. Booking stays open until then, for at most a year. */
+function ApproveIdDialog({ name, onClose, onApprove }: { name: string; onClose: () => void; onApprove: (until: string) => Promise<void> }) {
+  const [until, setUntil] = useState(''); const [err, setErr] = useState<string | null>(null); const [busy, setBusy] = useState(false);
+  async function go() { setBusy(true); setErr(null); try { await onApprove(until); } catch (x) { setErr((x as ApiError).message); } finally { setBusy(false); } }
+  return <Overlay title={`Approve ${name.split(' ')[0]}?`} onClose={onClose} width={420} footer={<><Btn kind="secondary" onClick={onClose}>Cancel</Btn><Btn loading={busy} onClick={go}><Check size={16} />Approve</Btn></>}>
+    <div className="stack">
+      <div className="field"><label htmlFor="ap-until">Card valid until</label>
+        <input id="ap-until" className={'input' + (err ? ' bad' : '')} type="date" value={until} min={ymd()} onChange={e => { setUntil(e.target.value); setErr(null); }} aria-invalid={!!err || undefined} aria-describedby="ap-until-h" />
+        {err ? <span className="err" role="alert" id="ap-until-h">{err}</span> : <span className="hint" id="ap-until-h">The expiry date printed on the card. {name.split(' ')[0]} can book until then, for at most one year.</span>}</div>
+    </div></Overlay>;
 }
 
 function ListingReview({ l, onDone }: { l: ListingItem; onDone: () => void }) {

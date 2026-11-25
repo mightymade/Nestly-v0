@@ -1,4 +1,4 @@
-import { CalendarDays, Check, GraduationCap, MapPin, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
+import { CalendarDays, Check, GraduationCap, IdCard, Mail, MapPin, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
 import { useState } from 'react';
 import { DataTable, type Column } from '../../components/DataTable';
 import { Overlay } from '../../components/Overlay';
@@ -9,7 +9,7 @@ import { BackBar, Btn, Field, Skeleton, TextInput } from '../../components/ui';
 import type { University } from '../../data/types';
 import { useIsPhone } from '../../lib/useIsPhone';
 import { addDays, ymd } from '../../lib/format';
-import { uniHostelCounts, ApiError, listUniversities, saveUniversity, semDates, semName } from '../../services/api';
+import { uniHostelCounts, ApiError, listUniversities, saveUniversity, semDates, semName, uniEmailStats } from '../../services/api';
 import { PickMap } from '../../components/maps';
 import { readLogo, UniLogo } from '../../components/UniLogo';
 import { placeName, type LatLng } from '../../lib/geo';
@@ -30,6 +30,7 @@ export function AdminUniversities() {
     { key: 'n', header: 'University', cell: u => <span className="who"><UniLogo uni={u} size={36} /><span className="min0"><b className="ink clamp1">{u.name}</b></span></span> },
     { key: 's', header: 'Short name', cell: u => u.short }, { key: 'a', header: 'Town', cell: u => u.area },
     { key: 'd', header: 'Student email ends with', cell: u => <code className="dom">@{u.domain}</code> },
+    { key: 'v', header: 'Students verify by', cell: u => u.emailOk ? <span className="row-sm small strong"><Mail size={14} />University email or ID</span> : <span className="row-sm small strong"><IdCard size={14} />Student ID</span> },
     { key: 'h', header: 'Hostels', cell: u => <span className="num">{hostelsNear(u.id)}</span> },
     { key: 'c', header: 'Semester dates', cell: u => u.sems?.length ? <span className="small nowrap" title={u.sems.map(x => semDates({ ...x, open: false })).join(', ')}>Next: {semName({ ...(u.sems.find(x => x.end >= today) ?? u.sems[u.sems.length - 1]!), open: false })}</span> : <span className="small warn-t strong">Not set</span> },
     { key: 'm', header: 'Map', cell: u => u.lat ? <span className="row-sm small ok-t strong"><MapPin size={14} />Pinned</span> : <span className="small warn-t strong">No pin</span> },
@@ -41,7 +42,7 @@ export function AdminUniversities() {
         <UniLogo uni={u} size={44} /><div className="vm-info"><div className="vm-line1"><b className="ink clamp1">{u.short}</b></div><div className="vm-line2"><span className="clamp1">{u.name}</span></div><div className="vm-line3"><code className="dom">@{u.domain}</code>{!u.sems?.length && <span className="warn-t strong">No dates</span>}</div></div>
         <Pencil size={16} className="muted" /></button>)}</div>
     : <DataTable label="Universities" noun="universities" rows={list} rowKey={u => u.id} columns={cols} onRowClick={setEdit} rowLabel={u => `Edit ${u.name}`} />;
-  const note = <p className="tiny muted">Students can only sign up with an email ending in their university’s domain. Confirm each domain with the university, because a wrong one stops its students from signing up.</p>;
+  const note = <p className="tiny muted">Students verify with their student ID unless you turn on university email for their university. Turn it on only after you have seen that university's emails arrive: open the university to see how many email sign-ups were confirmed.</p>;
   return <>
     {phone ? <><BackBar title="Universities" to="/a/settings" /><main className="m-main pushed"><div className="row end">{add}</div>{body}{note}</main></>
       : <><PageHeader title="Universities" actions={add} /><section className="card card-pad fill-card fill grow-y"><div className="card-body">{body}{note}</div></section></>}
@@ -86,6 +87,11 @@ function UniDialog({ u, onClose }: { u: University | null; onClose: () => void }
         <Field id="un-d" label="Student email domain" hint="The part after the @, like ucu.ac.ug." error={err.domain}><TextInput id="un-d" value={f.domain} onChange={e => setF({ ...f, domain: e.target.value })} error={err.domain} placeholder="ucu.ac.ug" /></Field>
         <div className="uni-test"><Field id="un-t" label="Test an email"><TextInput id="un-t" value={test} onChange={e => setTest(e.target.value)} placeholder="sarah.atim@ucu.ac.ug" /></Field>
           {t.includes('@') && <span className={'small strong row-sm ' + (match ? 'ok-t' : 'danger-t')}>{match ? <><Check size={15} />This email would be accepted</> : <><X size={15} />This email would be refused</>}</span>}</div>
+        <div className="field"><span className="label">How students prove they study here</span>
+          <label className="check" style={{ alignItems: 'flex-start' }}><input type="checkbox" checked={!!f.emailOk} onChange={e => setF({ ...f, emailOk: e.target.checked })} />
+            <span className="small"><b>Our emails reach {dom ? `@${dom}` : 'this university\'s'} addresses.</b> Students may confirm with their university email. Off: they always use the student ID check.</span></label>
+          {u && (() => { const st = uniEmailStats(u.id); return <span className="hint">{st.confirmed + st.stuck ? `University email sign-ups so far: ${st.confirmed} confirmed, ${st.stuck} never confirmed after a day.${st.stuck > st.confirmed ? ' Most did not get through, so leave this off.' : ''}` : 'No university email sign-ups yet. Test with a real student address before turning this on.'}</span>; })()}
+        </div>
       </div>
       <div className="field">
         <span className="label">Exact location</span>

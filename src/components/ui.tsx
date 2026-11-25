@@ -1,16 +1,38 @@
 import { LogoMark } from './LogoMark';
 import { BadgeCheck, ChevronLeft, Eye, EyeOff, Star } from 'lucide-react';
-import { useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react';
+import { useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type MouseEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { Hostel, User } from '../data/types';
 import { hostelArt } from '../lib/art';
 import { initials } from '../lib/format';
 
+/**
+ * Runs a click handler and, when it returns a promise (saving, sending, removing), marks the button busy until it settles.
+ * A busy button shows a spinner and ignores more clicks, so people see that their tap landed and never send it twice.
+ */
+function useBusyClick<E>(onClick?: (e: E) => unknown): [boolean, ((e: E) => void) | undefined] {
+  const [busy, setBusy] = useState(false);
+  if (!onClick) return [busy, undefined];
+  return [busy, (e: E) => {
+    if (busy) return;
+    const r = onClick(e) as Promise<unknown> | undefined;
+    if (r && typeof r.then === 'function') { setBusy(true); r.then(() => setBusy(false), () => setBusy(false)); }
+  }];
+}
+
 type BtnKind = 'primary' | 'secondary' | 'soft' | 'danger' | 'text' | 'light';
-export function Btn({ loading, kind = 'primary', size, block, children, className = '', ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean; kind?: BtnKind; size?: 'sm'; block?: boolean }) {
+export function Btn({ loading, kind = 'primary', size, block, children, className = '', onClick, ...rest }: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & { onClick?: (e: MouseEvent<HTMLButtonElement>) => unknown; loading?: boolean; kind?: BtnKind; size?: 'sm'; block?: boolean }) {
+  const [auto, click] = useBusyClick(onClick); const busy = loading || auto;
   const cls = ['btn', `btn-${kind}`, size === 'sm' && 'btn-sm', block && 'btn-block', className].filter(Boolean).join(' ');
-  return <button type="button" {...rest} className={cls} disabled={rest.disabled || loading} aria-busy={loading || undefined}>
-    {loading && <span className="spinner" aria-hidden="true" />}{children}</button>;
+  return <button type="button" {...rest} onClick={click} className={cls} disabled={rest.disabled || busy} aria-busy={busy || undefined}>
+    {busy && <span className="spinner" aria-hidden="true" />}{children}</button>;
+}
+
+/** A plain button (icon buttons and small links) with the same busy behaviour as Btn: the spinner replaces the icon while it works. */
+export function ActionButton({ className = '', children, onClick, ...rest }: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & { onClick?: (e: MouseEvent<HTMLButtonElement>) => unknown }) {
+  const [busy, click] = useBusyClick(onClick);
+  return <button type="button" {...rest} onClick={click} className={className + (busy ? ' is-busy' : '')} disabled={rest.disabled || busy} aria-busy={busy || undefined}>
+    {children}{busy && <span className="spinner" aria-hidden="true" />}</button>;
 }
 
 export function Field({ label, error, hint, id, children }: { label: string; error?: string | null; hint?: ReactNode; id: string; children: ReactNode }) {
@@ -67,7 +89,7 @@ export function Skeleton({ rows = 3, h = 88 }: { rows?: number; h?: number }) {
 }
 
 export function Logo() {
-  return <span className="logo"><span className="logo-mark"><LogoMark /></span>Nestly</span>;
+  return <span className="logo"><span className="logo-mark"><LogoMark /></span><span className="logo-word">Nestly</span></span>;
 }
 
 /** A person's name with the blue verified tick once their student email is confirmed. */

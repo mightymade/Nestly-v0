@@ -49,7 +49,7 @@ export async function uploadDocFile(ownerId: string, docId: string, fileName: st
 export async function docLinks(stored: string[]): Promise<Map<string, string>> {
   const paths = stored.filter(u => u.startsWith(DOC_PREFIX)).map(u => u.slice(DOC_PREFIX.length));
   const out = new Map<string, string>(); if (!paths.length) return out;
-  const { data } = await sb!.storage.from(DOCS).createSignedUrls(paths, 60 * 60 * 6);
+  const { data } = await sb!.storage.from(DOCS).createSignedUrls(paths, 60 * 15);
   for (const d of data ?? []) if (d.path && d.signedUrl) out.set(DOC_PREFIX + d.path, d.signedUrl);
   return out;
 }

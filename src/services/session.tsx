@@ -19,6 +19,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(!live);
   const [failed, setFailed] = useState<string | null>(null);
   useEffect(() => subscribe(() => setUser(sessionUser())), []);
+  // The splash screen in index.html covers the page until the data is ready (or loading failed), then fades out.
+  useEffect(() => {
+    if (!ready && !failed) return;
+    const el = document.getElementById('splash'); if (!el) return;
+    el.classList.add('out'); const t = setTimeout(() => el.remove(), 400); return () => clearTimeout(t);
+  }, [ready, failed]);
   useEffect(() => {
     if (!live) return;
     reload().then(() => { setUser(sessionUser()); setReady(true); }).catch(e => setFailed(e.message ?? 'Could not reach Nestly.'));
@@ -41,7 +47,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return () => { data.subscription.unsubscribe(); clearInterval(t); document.removeEventListener('visibilitychange', back); void sb!.removeChannel(channel); if (soon) clearTimeout(soon); };
   }, []);
   if (failed) return <div className="boot"><b>Nestly could not load</b><p>{failed}</p><button className="btn btn-primary" onClick={() => location.reload()}>Try again</button></div>;
-  if (!ready) return <div className="boot" aria-busy="true"><span className="boot-dot" /><p>Loading Nestly...</p></div>;
+  if (!ready) return null;
   return <Ctx.Provider value={user}>{children}</Ctx.Provider>;
 }
 export const useUser = () => useContext(Ctx);

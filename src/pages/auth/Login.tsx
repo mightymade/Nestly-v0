@@ -1,13 +1,16 @@
 import { Building2, ChevronDown, GraduationCap, KeyRound, LogIn, RotateCcw, ShieldCheck } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Overlay } from '../../components/Overlay';
 import { useToast } from '../../components/Toast';
 import { Btn, Field, PasswordInput, TextInput } from '../../components/ui';
-import { ApiError, login, requestPasswordReset } from '../../services/api';
+import { ApiError, login, requestPasswordReset, idNeedsPhotos } from '../../services/api';
 import { resetDemo } from '../../services/api';
 import { live } from '../../services/supabase';
 import { AuthLayout } from './AuthLayout';
+import { Captcha, captchaOn } from '../../components/Captcha';
+import { aalNow, codeNeeded, setCodePending, twoStepOn } from '../../services/security';
+import type { User } from '../../data/types';
 import { takeNext } from '../../components/AccountGate';
 
 export function Login() {
@@ -15,13 +18,24 @@ export function Login() {
   const [idv, setId] = useState(''); const [pw, setPw] = useState('');
   const [err, setErr] = useState<{ field?: string; msg: string } | null>(null);
   const [busy, setBusy] = useState(false); const [forgot, setForgot] = useState(false); const [demo, setDemo] = useState(false);
+  const [captcha, setCaptcha] = useState(''); const [again, setAgain] = useState(0);
+  const go = (u: User) => { const next = takeNext(); nav(u.role === 'student' ? (idNeedsPhotos(u) ? '/signup' : next ?? '/s/explore') : u.role === 'custodian' ? '/c/today' : u.role === 'admin' ? '/a/overview' : u.ownerStatus === 'incomplete' ? '/owner/signup' : '/o/overview', { replace: true }); };
+  // Wake the login server function while the person types, so the first log in does not wait for it to start.
+  useEffect(() => { if (live) fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/login`, { method: 'OPTIONS' }).catch(() => undefined); }, []);
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!idv.trim()) return setErr({ field: 'id', msg: 'Enter your email or username.' });
     if (!pw) return setErr({ field: 'password', msg: 'Enter your password.' });
+    if (captchaOn && !captcha) return setErr({ msg: 'Please complete the check that you are not a robot.' });
     setBusy(true); setErr(null);
-    try { const u = await login(idv, pw); const next = takeNext(); nav(u.role === 'student' ? next ?? '/s/explore' : u.role === 'custodian' ? '/c/today' : u.role === 'admin' ? '/a/overview' : u.ownerStatus === 'incomplete' ? '/owner/signup' : '/o/overview', { replace: true }); }
-    catch (x) { const a = x as ApiError; setErr({ field: a.field, msg: a.message }); } finally { setBusy(false); }
+    try {
+      const u = await login(idv, pw, captcha || undefined);
+      // Two-step login: accounts that have it go to the code page first. Admins without it are sent to set it up there.
+      if ((live && await codeNeeded()) || (!live && u.role !== 'student' && await twoStepOn(u.id))) { setCodePending(true); return nav('/security/two-step', { replace: true }); }
+      if (live && u.role === 'admin' && aalNow() !== 'aal2') return nav('/security/two-step', { replace: true });
+      go(u);
+    }
+    catch (x) { const a = x as ApiError; setErr({ field: a.field, msg: a.message }); setAgain(n => n + 1); } finally { setBusy(false); }
   }
   const fill = (a: string) => { setId(a); setPw('nestly123'); setErr(null); setDemo(false); };
   return <AuthLayout title="Log in" sub="Students use their student email. Custodians and owners can use their username." back="/welcome" ownerLink={false} centered>
@@ -33,6 +47,8 @@ export function Login() {
       <div className="rel"><Field id="login-pw" label="Password" error={err?.field === 'password' ? err.msg : null}>
         <PasswordInput id="login-pw" autoComplete="current-password" placeholder="••••••••" value={pw} onChange={e => setPw(e.target.value)} error={err?.field === 'password' ? err.msg : null} /></Field>
         <button type="button" className="field-aside" onClick={() => setForgot(true)}>Forgot password?</button></div>
+      <Captcha onToken={setCaptcha} reset={again} />
+      {err && !err.field && <p className="err" role="alert">{err.msg}</p>}
       <Btn type="submit" block loading={busy}><LogIn size={18} />Log in</Btn>
       <p className="small muted login-alt">New here? <Link to="/signup">Create a student account</Link><span aria-hidden="true">·</span><Link to="/owner/signup">List a hostel</Link></p>
     </form>
@@ -50,13 +66,17 @@ export function Login() {
 }
 
 function ForgotPassword({ onClose }: { onClose: () => void }) {
-  const [email, setEmail] = useState(''); const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState(''); const [busy, setBusy] = useState(false); const [captcha, setCaptcha] = useState(''); const [again, setAgain] = useState(0);
   const [err, setErr] = useState<string | null>(null); const [sent, setSent] = useState(false);
-  async function go(e: FormEvent) { e.preventDefault(); setBusy(true); setErr(null); try { await requestPasswordReset(email); setSent(true); } catch (x) { setErr((x as Error).message); } finally { setBusy(false); } }
+  async function go(e: FormEvent) {
+    e.preventDefault(); if (captchaOn && !captcha) return setErr('Please complete the check that you are not a robot.');
+    setBusy(true); setErr(null); try { await requestPasswordReset(email, captcha || undefined); setSent(true); } catch (x) { setErr((x as Error).message); setAgain(n => n + 1); } finally { setBusy(false); }
+  }
   return <Overlay title="Reset your password" onClose={onClose} width={440}>
     {sent ? <div className="center"><p>If <b>{email}</b> has a Nestly account, a reset link is on its way. It expires in 1 hour.</p><Btn block onClick={onClose}>Back to log in</Btn></div>
       : <form className="stack" onSubmit={go} noValidate><p className="muted">Enter the email on your account and we will send you a link to set a new password.</p>
         <Field id="fp-email" label="Email" error={err}><TextInput id="fp-email" type="email" value={email} onChange={e => setEmail(e.target.value)} error={err} autoComplete="email" /></Field>
+        <Captcha onToken={setCaptcha} reset={again} />
         <Btn type="submit" block loading={busy}>Send reset link</Btn></form>}
   </Overlay>;
 }

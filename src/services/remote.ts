@@ -22,9 +22,9 @@ const camel = (k: string) => k.replace(/_([a-z])/g, (_, c: string) => c.toUpperC
 
 /** Columns of each table, in snake_case. Anything else on the app's objects is not saved. */
 const COLS: Record<string, string[]> = {
-  universities: ['id', 'name', 'short', 'domain', 'area', 'lat', 'lng', 'logo', 'sems'],
-  profiles: ['id', 'role', 'name', 'email', 'username', 'phone', 'photo', 'university_id', 'email_verified', 'verified_until', 'hostel_id', 'owner_status', 'owner_note', 'suspended', 'suspend_reason', 'joined', 'last_active'],
-  owner_accounts: ['owner_id', 'payout', 'sub_paid_until', 'sub_grace_until', 'sub_reminded_at'],
+  universities: ['id', 'name', 'short', 'domain', 'area', 'lat', 'lng', 'logo', 'sems', 'email_ok'],
+  profiles: ['id', 'role', 'name', 'email', 'username', 'phone', 'photo', 'university_id', 'email_verified', 'verified_until', 'hostel_id', 'owner_status', 'owner_note', 'suspended', 'suspend_reason', 'joined', 'last_active', 'verify_via', 'student_no', 'id_status', 'id_note'],
+  owner_accounts: ['owner_id', 'payout', 'sub_paid_until', 'sub_grace_until', 'sub_reminded_at', 'payout_pending', 'payout_pending_at', 'payout_review'],
   hostels: ['id', 'owner_id', 'name', 'uni', 'area', 'km', 'dir', 'rating', 'n_rev', 'owner_name', 'verified', 'fee', 'visit', 'floors', 'cols', 'amen', 'rooms', 'about', 'seed', 'photo_url', 'status', 'review_note', 'suspend_reason', 'paused_for', 'review_sections', 'blocks', 'location', 'rules', 'photos', 'sems', 'views', 'saves', 'submitted_at', 'listed_at'],
   reviews: ['id', 'hostel_id', 'user_id', 'booking_id', 'who', 'stars', 'when', 'text', 'reply', 'hidden'],
   bookings: ['id', 'user_id', 'hostel_id', 'room', 'room_no', 'sem', 'fee', 'status', 'paid_on', 'cancel_until', 'at', 'pay_ref', 'rent', 'rent_paid_on'],
@@ -67,7 +67,8 @@ let me: User | null = null;
 
 /** Turns the in-memory data into table rows, ready to compare or save. */
 function rowsOf(db: DB): Record<string, Row[]> {
-  const ownerFields = (u: User) => ({ ownerId: u.id, payout: u.payout, subPaidUntil: u.subPaidUntil, subGraceUntil: u.subGraceUntil, subRemindedAt: u.subRemindedAt });
+  const ownerFields = (u: User) => ({ ownerId: u.id, payout: u.payout, subPaidUntil: u.subPaidUntil, subGraceUntil: u.subGraceUntil, subRemindedAt: u.subRemindedAt,
+    payoutPending: u.payoutPending, payoutPendingAt: u.payoutPendingAt, payoutReview: u.payoutReview ?? false });
   return {
     universities: db.universities.map(u => toRow('universities', u as never)),
     config: [toRow('config', { id: 1, ...db.config })],
@@ -256,3 +257,8 @@ export function rebase(db: DB) { takeSnapshot(db); }
 
 /** Forgets snapshot state, used when signing out. */
 export function resetRemote() { authUid = null; me = null; snap = new Map(); ownerAccountIds = new Set(); docStored.clear(); }
+/** A new 15-minute link for a private document, made when someone opens it (the first link may have expired). */
+export async function freshDocLink(d: VerificationDoc): Promise<string | undefined> {
+  const stored = storedDocUrl(d); if (!stored.startsWith(DOC_PREFIX)) return d.url || d.link;
+  return (await docLinks([stored])).get(stored);
+}
